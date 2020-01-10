@@ -3,6 +3,7 @@ module novel
 go 1.13
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.0.5
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/antchfx/htmlquery v1.2.1 // indirect
 	github.com/antchfx/xmlquery v1.2.2 // indirect
