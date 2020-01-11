@@ -20,6 +20,10 @@ var findCmd = &cobra.Command{
 }
 
 func FindCommand(cmd *cobra.Command, args []string) {
+	DoFind()
+}
+
+func DoFind() {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		result, err := reader.ReadString('\n')

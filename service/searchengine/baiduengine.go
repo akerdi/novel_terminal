@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"novel/fetcher"
 	"novel/model"
+	"strings"
 	"sync"
 
 	"github.com/gocolly/colly"
@@ -48,20 +49,20 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 	result := &model.SearchResult{Href: href, Title: title, IsParse: 1, Host: "www"}
 	fmt.Printf("^^^ %+v ", result)
 	engine.parseResultFunc(result)
-	// c := fetcher.NewCollector()
-	// c.OnResponse(func(response *colly.Response) {
-	// 	realUrl := response.Request.URL.String()
-	// 	isContain := strings.Contains(realUrl, "baidu")
-	// 	if isContain {
-	// 		return
-	// 	}
-	// 	host := response.Request.URL.Host
-	// 	result := &model.SearchResult{Href: href, Title: title, IsParse: 1, Host: host}
-	// 	engine.parseResultFunc(result)
-	// 	// _, ok := conf.RuleConfig.IgnoreDomain[host]
-	// })
-	// err := c.Visit(href)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	c := fetcher.NewCollector()
+	c.OnResponse(func(response *colly.Response) {
+		realUrl := response.Request.URL.String()
+		isContain := strings.Contains(realUrl, "baidu")
+		if isContain {
+			return
+		}
+		host := response.Request.URL.Host
+		result := &model.SearchResult{Href: href, Title: title, IsParse: 1, Host: host}
+		engine.parseResultFunc(result)
+		// _, ok := conf.RuleConfig.IgnoreDomain[host]
+	})
+	err := c.Visit(href)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

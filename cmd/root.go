@@ -19,9 +19,6 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	RootCmd.PersistentFlags().StringVar(&DBAddr, "addr", "localhost:6379", "address of Redis database")
 	RootCmd.PersistentFlags().StringVar(&DBPassword, "pass", "", "password for Redis database")
-
-	// RootCmd.AddCommand(listCmd)
-	// RootCmd.AddCommand(clearCmd)
 }
 
 var RootCmd = &cobra.Command{
