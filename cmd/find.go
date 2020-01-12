@@ -3,8 +3,12 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"novel/db"
 	"novel/model"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 
 	"novel/service/searchengine"
@@ -24,43 +28,65 @@ func FindCommand(cmd *cobra.Command, args []string) {
 }
 
 func DoFind() {
+	var keyWord string
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		result, err := reader.ReadString('\n')
+		kw, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("read err: ", err)
 		}
-		fmt.Println("result:::", result)
-		startSearchEngine(result)
+		fmt.Println("result:::", kw)
+		startSearchEngine(kw)
+		keyWord = kw
 		if len(searchResults) > 0 {
 			break
 		}
 	}
-	var hostArray []string
-	for _, result := range searchResults {
-		hostArray = append(hostArray, result.Href)
+	var searchSiteResultArray []string
+	for index, result := range searchResults {
+		log.Printf("4result::: %+v \n", result)
+		askStr := fmt.Sprintf("%d ||| %s %s", index, result.Title, result.Host)
+		log.Println("askStr:::", askStr)
+		searchSiteResultArray = append(searchSiteResultArray, askStr)
+		stmt, err := db.InsertQuery("INSERT INTO novelsite(href, title, isParse, host, kw) values(?,?,?,?,?)")
+		if err != nil {
+			log.Fatal("))))))))", err)
+		}
+		res, err := db.ExecWithStmt(stmt, []interface{}{result.Href, result.Title, true, result.Host, keyWord})
+		if err != nil {
+			log.Fatal("meet err: ", err)
+		}
+		log.Println("======", res)
+
 	}
-	fmt.Println("hostArray:::", hostArray)
-	fmt.Println("hostArrayhostArray", hostArray[0])
+	fmt.Println("searchSiteResultArray:::", searchSiteResultArray)
+	fmt.Println("searchSiteResultArray[0]", searchSiteResultArray[0])
+	askSearchSiteToSelect(searchSiteResultArray)
+}
+
+func askSearchSiteToSelect(searchSiteResultArray []string) {
 	qs := []*survey.Question{
 		{
-			Name: "site",
+			Name: "title",
 			Prompt: &survey.Select{
-				Message: "Choose a site:",
-				Options: hostArray,
-				Default: hostArray[0],
+				Message: "Choose a title:",
+				Options: searchSiteResultArray,
+				Default: searchSiteResultArray[0],
 			},
 		},
 	}
-	ansers := struct {
-		ChooseSite string `survey:"site"`
+	answers := struct {
+		ChooseTitle string `survey:"title"`
 	}{}
-	err := survey.Ask(qs, &ansers)
+	err := survey.Ask(qs, &answers)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Printf("%s chose %s.", "1111", ansers.ChooseSite)
+	fmt.Printf("%s chose %s. \n", "1111", answers.ChooseTitle)
+	indexStr := strings.Split(answers.ChooseTitle, " ||| ")[0]
+	index, _ := strconv.Atoi(indexStr)
+	fmt.Printf("+++++++ %d", index)
 
 }
 

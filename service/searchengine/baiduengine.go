@@ -46,9 +46,6 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 	defer group.Done()
 	href := element.Attr("href")
 	title := element.Text
-	result := &model.SearchResult{Href: href, Title: title, IsParse: 1, Host: "www"}
-	fmt.Printf("^^^ %+v ", result)
-	engine.parseResultFunc(result)
 	c := fetcher.NewCollector()
 	c.OnResponse(func(response *colly.Response) {
 		realUrl := response.Request.URL.String()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"novel/db"
 	"time"
 
 	"novel/cmd"
@@ -17,22 +18,13 @@ func main() {
 	// 	os.Exit(1)
 	// }
 	// setupSqlite3()
+	db.SetUpdateDataBase()
 	cmdDoFind()
 }
 
 var (
-	CREATE_USERINFO = "CREATE TABLE IF NOT EXISTS `userinfo` (" +
-		"`uid` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`username` VARCHAR(64) NULL," +
-		"`departname` VARCHAR(64) NULL," +
-		"`created` DATE NULL" +
-		");"
-	CREATE_USERDETAIL = "CREATE TABLE IF NOT EXISTS `userdeatail` (" +
-		"`uid` INT(10) NULL," +
-		"`intro` TEXT NULL," +
-		"`profile` TEXT NULL," +
-		"PRIMARY KEY (`uid`)" +
-		");"
+	CREATE_USERINFO   = ""
+	CREATE_USERDETAIL = ""
 )
 
 func setupSqlite3() {
