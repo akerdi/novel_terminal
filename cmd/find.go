@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"novel/service/searchengine"
 
@@ -24,11 +25,19 @@ var findCmd = &cobra.Command{
 }
 
 func FindCommand(cmd *cobra.Command, args []string) {
-	DoFind()
+	fmt.Println("novelname ::: ", NovelName)
+	if NovelName != "" {
+		startSearchEngine(NovelName)
+		afterSearchNovel(NovelName)
+	} else {
+		GotoFind()
+	}
+	fmt.Println(args)
+
 }
 
-func DoFind() {
-	var keyWord string
+func GotoFind() {
+	var keyword string
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		kw, err := reader.ReadString('\n')
@@ -37,27 +46,32 @@ func DoFind() {
 		}
 		fmt.Println("result:::", kw)
 		startSearchEngine(kw)
-		keyWord = kw
+		keyword = kw
 		if len(searchResults) > 0 {
 			break
 		}
 	}
+	afterSearchNovel(keyword)
+}
+
+func afterSearchNovel(keyword string) {
 	var searchSiteResultArray []string
 	for index, result := range searchResults {
 		log.Printf("4result::: %+v \n", result)
 		askStr := fmt.Sprintf("%d ||| %s %s", index, result.Title, result.Host)
 		log.Println("askStr:::", askStr)
 		searchSiteResultArray = append(searchSiteResultArray, askStr)
-		stmt, err := db.InsertQuery("INSERT INTO novelsite(href, title, isParse, host, kw) values(?,?,?,?,?)")
+		stmt, err := db.InsertQuery("INSERT INTO novelsite(href, title, isParse, host, kw, createAt) values(?,?,?,?,?,?)")
 		if err != nil {
 			log.Fatal("))))))))", err)
 		}
-		res, err := db.ExecWithStmt(stmt, []interface{}{result.Href, result.Title, true, result.Host, keyWord})
+		nowTime := time.Now().UnixNano() / 1e6
+		fmt.Println("^^^^^^^^", nowTime)
+		res, err := db.ExecWithStmt(stmt, []interface{}{result.Href, result.Title, true, result.Host, keyword, nowTime})
 		if err != nil {
 			log.Fatal("meet err: ", err)
 		}
 		log.Println("======", res)
-
 	}
 	fmt.Println("searchSiteResultArray:::", searchSiteResultArray)
 	fmt.Println("searchSiteResultArray[0]", searchSiteResultArray[0])
@@ -127,6 +141,9 @@ func startSearchEngine(novelName string) []*model.SearchResult {
 	return results
 }
 
+var NovelName string
+
 func init() {
+	RootCmd.PersistentFlags().StringVar(&NovelName, "novelname", "", "搜索的小说名")
 	RootCmd.AddCommand(findCmd)
 }

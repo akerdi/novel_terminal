@@ -52,3 +52,11 @@ Select ← → ↑ ↓ to enter the captor.
 
 In the captor, use ↑ ↓ to choose preview or next captor
 
+
+
+
+## Usage
+
+novel find --novelname 一片雨
+
+novel find

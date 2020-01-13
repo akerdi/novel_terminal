@@ -14,12 +14,14 @@ var (
 		"`title` VARCHAR(64) NULL," +
 		"`isParse` NOT NULL DEFAULT False," +
 		"`host` VARCHAR(64)," +
-		"`kw` VARCHAR(64)" +
+		"`kw` VARCHAR(64)," +
+		"`createAt` INTEGER NOT NULL" +
 		");"
 	create_NOVEL_CHAPTER = "CREATE TABLE IF NOT EXISTS `novelchapter` (" +
 		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
 		"`title` VARCHAR(64) NULL," +
 		"`host` VARCHAR(64) NOT NULL," +
+		"`createAt` INTEGER NOT NULL," +
 		"`novelsite_id` INTEGER," +
 		"FOREIGN KEY (novelsite_id) REFERENCES novelsite(id)" +
 		");"
@@ -27,7 +29,8 @@ var (
 		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
 		"`title` VARCHAR(64) NOT NULL," +
 		"`content` TEXT NULL," +
-		"`novelsite_id` INTEGER," +
+		"`createAt` INTEGER NOT NULL," +
+		"`novelsite_id` INTEGER ," +
 		"`novelchapter_id` INTEGER," +
 		"FOREIGN KEY (novelsite_id) REFERENCES novcelsite(id)," +
 		"FOREIGN KEY (novelchapter_id) REFERENCES novelchapter(id)" +

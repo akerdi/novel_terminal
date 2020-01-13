@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"novel/db"
+	"os"
 	"time"
 
 	"novel/cmd"
@@ -13,13 +14,14 @@ import (
 )
 
 func main() {
-	fmt.Println("Welcome to novel world!")
-	// if err := cmd.RootCmd.Execute(); err != nil {
-	// 	os.Exit(1)
-	// }
-	// setupSqlite3()
 	db.SetUpdateDataBase()
-	cmdDoFind()
+	fmt.Println("Welcome to novel world!")
+	if err := cmd.RootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+	// setupSqlite3()
+	// db.SetUpdateDataBase()
+	// cmdDoFind()
 }
 
 var (
@@ -102,5 +104,5 @@ func checkErr(err error) {
 }
 
 func cmdDoFind() {
-	cmd.DoFind()
+	cmd.GotoFind()
 }
