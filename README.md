@@ -55,8 +55,25 @@ In the captor, use ↑ ↓ to choose preview or next captor
 
 
 
-## Usage
+## Usage 1.0
 
-novel find --novelname 一片雨
+### find
 
-novel find
+        novel find # 不输入关键词，则会等待用户输入
+        novel find --novelname 一片雨
+
+find 是用于寻找小说的关键词，随后#novel 会将该搜索列表缓存
+
+### list
+
+        novel list # 不输入关键词，同上等待用户输入
+        novel list --novelname 大侠
+
+list 是用于展开该小说分类，同时尝试读取该网站的章节，如果读取失败，则 动作[read] 也无效
+
+### read
+
+        novel read # 没有参数同上
+        novel read --novelname 超级英雄
+
+read 用于选取对应的小说进行阅读。该选项来源于 动作[list]

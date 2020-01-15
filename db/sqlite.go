@@ -19,8 +19,11 @@ var (
 		");"
 	create_NOVEL_CHAPTER = "CREATE TABLE IF NOT EXISTS `novelchapter` (" +
 		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`title` VARCHAR(64) NULL," +
-		"`host` VARCHAR(64) NOT NULL," +
+		"`title` VARCHAR(64) NULL," + // 小说名
+		"`chapters` TEXT NOT NULL," + // 包含章节链接、章节名字的json text
+		"`origin_url` VARCHAR(64) NOT NULL," + // 原始小说链接
+		"`link_prefix` VARCHAR(32) NOT NULL," + // 章节跳转路径拼接逻辑
+		"`domain` VARCHAR(64) NOT NULL," + //该小说主域名
 		"`createAt` INTEGER NOT NULL," +
 		"`novelsite_id` INTEGER," +
 		"FOREIGN KEY (novelsite_id) REFERENCES novelsite(id)" +
@@ -70,6 +73,9 @@ func InsertQuery(query string) (*sql.Stmt, error) {
 func ExecWithStmt(stmt *sql.Stmt, param []interface{}) (interface{}, error) {
 	res, err := stmt.Exec(param...)
 	return res, err
+}
+func Query(queryString string) (*sql.Rows, error) {
+	return DBdf.Query(queryString)
 }
 func checkErr(err error) {
 	if err != nil {

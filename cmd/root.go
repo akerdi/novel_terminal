@@ -9,10 +9,12 @@ import (
 
 var DBAddr, DBPassword string
 var Verbose bool
+var NovelName string
 
 var redisClient *redis.Client
 
 func init() {
+	RootCmd.PersistentFlags().StringVar(&NovelName, "novelname", "", "搜索的小说名")
 	RootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	RootCmd.PersistentFlags().StringVar(&DBAddr, "addr", "localhost:6379", "address of Redis database")
 	RootCmd.PersistentFlags().StringVar(&DBPassword, "pass", "", "password for Redis database")

@@ -141,9 +141,6 @@ func startSearchEngine(novelName string) []*model.SearchResult {
 	return results
 }
 
-var NovelName string
-
 func init() {
-	RootCmd.PersistentFlags().StringVar(&NovelName, "novelname", "", "搜索的小说名")
 	RootCmd.AddCommand(findCmd)
 }
