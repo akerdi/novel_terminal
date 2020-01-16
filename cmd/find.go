@@ -61,7 +61,7 @@ func afterSearchNovel(keyword string) {
 		askStr := fmt.Sprintf("%d ||| %s %s", index, result.Title, result.Host)
 		log.Println("askStr:::", askStr)
 		searchSiteResultArray = append(searchSiteResultArray, askStr)
-		stmt, err := db.InsertQuery("INSERT INTO novelsite(href, title, isParse, host, kw, createAt) values(?,?,?,?,?,?)")
+		stmt, err := db.InsertQuery(db.InsertSite)
 		if err != nil {
 			log.Fatal("))))))))", err)
 		}

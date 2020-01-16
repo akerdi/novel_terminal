@@ -3,6 +3,7 @@ package searchengine
 import (
 	"fmt"
 	"net/url"
+	"novel/conf"
 	"novel/fetcher"
 	"novel/model"
 	"strings"
@@ -56,7 +57,12 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 			return
 		}
 		host := response.Request.URL.Host
-		result := &model.SearchResult{Href: realURL, Title: title, IsParse: true, Host: host}
+		_, ok := conf.RuleConfig.IgnoreDomain[host]
+		if ok {
+			return
+		}
+		isParse := engine.CheckIsParse(host)
+		result := &model.SearchResult{Href: realURL, Title: title, IsParse: isParse, Host: host}
 		engine.parseResultFunc(result)
 		// _, ok := conf.RuleConfig.IgnoreDomain[host]
 	})
@@ -64,4 +70,15 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+func (engine *BaiDuSearchEngine) CheckIsParse(host string) bool {
+	isParse := false
+	for key := range conf.RuleConfig.Rule {
+		if host == key {
+			isParse = true
+			break
+		}
+	}
+	return isParse
 }

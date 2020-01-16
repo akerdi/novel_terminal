@@ -8,37 +8,58 @@ import (
 )
 
 var (
-	create_NOVEL_SITE = "CREATE TABLE IF NOT EXISTS `novelsite` (" +
-		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`href` VARCHAR(64) NULL," +
-		"`title` VARCHAR(64) NULL," +
-		"`isParse` NOT NULL DEFAULT False," +
-		"`host` VARCHAR(64)," +
-		"`kw` VARCHAR(64)," +
-		"`createAt` INTEGER NOT NULL" +
-		");"
-	create_NOVEL_CHAPTER = "CREATE TABLE IF NOT EXISTS `novelchapter` (" +
-		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`title` VARCHAR(64) NULL," + // 小说名
-		"`chapters` TEXT NOT NULL," + // 包含章节链接、章节名字的json text
-		"`origin_url` VARCHAR(64) NOT NULL," + // 原始小说链接
-		"`link_prefix` VARCHAR(32) NOT NULL," + // 章节跳转路径拼接逻辑
-		"`domain` VARCHAR(64) NOT NULL," + //该小说主域名
-		"`createAt` INTEGER NOT NULL," +
-		"`novelsite_id` INTEGER," +
-		"FOREIGN KEY (novelsite_id) REFERENCES novelsite(id)" +
-		");"
-	create_NOVEL_CONTENT = "CREATE TABLE IF NOT EXISTS `novelcontent` (" +
-		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`title` VARCHAR(64) NOT NULL," +
-		"`content` TEXT NULL," +
-		"`createAt` INTEGER NOT NULL," +
-		"`novelsite_id` INTEGER ," +
-		"`novelchapter_id` INTEGER," +
-		"FOREIGN KEY (novelsite_id) REFERENCES novcelsite(id)," +
-		"FOREIGN KEY (novelchapter_id) REFERENCES novelchapter(id)" +
-		");"
-	DBdf *sql.DB
+	DBdf              *sql.DB
+	create_NOVEL_SITE = `
+	CREATE TABLE IF NOT EXISTS novelsite (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		href VARCHAR(64) NULL,
+		title VARCHAR(64) NULL,
+		isParse NOT NULL DEFAULT False,
+		host VARCHAR(64),
+		kw VARCHAR(64),
+		createAt INTEGER NOT NULL
+		);`
+	/*
+		title 小说名
+		chapters 包含章节链接、章节名字的json text
+		link_prefix 章节跳转路径拼接逻辑
+		origin_url 原始小说链接
+		domain 该小说主域名
+	*/
+	create_NOVEL_CHAPTER = `
+	CREATE TABLE IF NOT EXISTS novelchapter (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title VARCHAR(64) NULL,
+		chapters TEXT NOT NULL,
+		origin_url VARCHAR(64) NOT NULL,
+		link_prefix VARCHAR(32) NOT NULL,
+		domain VARCHAR(64) NOT NULL,
+		createAt INTEGER NOT NULL,
+		novelsite_id INTEGER,
+		FOREIGN KEY (novelsite_id) REFERENCES novelsite(id)
+		);`
+	/*
+		chapter_index 章节索引unique
+	*/
+	create_NOVEL_CONTENT = `
+	CREATE TABLE IF NOT EXISTS novelcontent (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title VARCHAR(64) NOT NULL,
+		content TEXT NULL,
+		chapter_index INTEGER NOT NULL,
+		createAt INTEGER NOT NULL,
+		novelsite_id INTEGER ,
+		novelchapter_id INTEGER,
+		FOREIGN KEY (novelsite_id) REFERENCES novcelsite(id),
+		FOREIGN KEY (novelchapter_id) REFERENCES novelchapter(id)
+		)`
+	createNovelContentIndex = `
+	CREATE UNIQUE INDEX IF NOT EXISTS site_chapter_chapterIndex
+	on novelcontent (novelsite_id, novelchapter_id, chapter_index)
+	`
+	InsertChapter = "INSERT INTO novelchapter(title, chapters, origin_url, link_prefix, domain, novelsite_id, createAt) values(?,?,?,?,?,?,?)"
+	InsertSite    = "INSERT INTO novelsite(href, title, isParse, host, kw, createAt) values(?,?,?,?,?,?)"
+	InsertContent = "INSERT INTO novelcontent(title, content, creatAt, novelsite_id, novelchapter_id) values(?,?,?,?,?)"
 )
 
 func SetUpdateDataBase() {
@@ -65,12 +86,18 @@ func SetUpdateDataBase() {
 	res, err = stmt.Exec()
 	checkErr(err)
 	fmt.Println("create novel content success")
+	// 索引
+	stmt, err = db.Prepare(createNovelContentIndex)
+	checkErr(err)
+	res, err = stmt.Exec()
+	checkErr(err)
+	fmt.Println("create novel content compose index success")
 }
 func InsertQuery(query string) (*sql.Stmt, error) {
 	stmt, err := DBdf.Prepare(query)
 	return stmt, err
 }
-func ExecWithStmt(stmt *sql.Stmt, param []interface{}) (interface{}, error) {
+func ExecWithStmt(stmt *sql.Stmt, param []interface{}) (sql.Result, error) {
 	res, err := stmt.Exec(param...)
 	return res, err
 }

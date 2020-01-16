@@ -89,18 +89,38 @@ func ListCommand(cmd *cobra.Command, args []string) {
 		nextIndex++
 	}
 	fmt.Println("askQs", askQs)
-	fmt.Println("searchResult:::: ", searchResults)
 	selectIndex := askSearchSiteTitleSelect(askQs)
 	fmt.Println("-------------", selectIndex)
 
 	searchResult := searchResults[selectIndex]
 	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
-	chapter, err := parseNovelChapter(searchResult)
+	chapterResult, err := parseNovelChapter(searchResult)
 	if err != nil {
 		log.Fatal(")))))))))", err)
 	}
-	fmt.Printf("(((((((%s ", chapter)
-	saveNovelChapter(chapter, searchResult)
+	if len(chapterResult.Chapters) == 0 {
+		fmt.Println("获取章节失败, 请试用其他网站")
+		return
+	}
+	id, err := saveNovelChapter(chapterResult, searchResult)
+	if id < 0 || err != nil {
+		log.Fatal("保存章节失败")
+		return
+	}
+	for _, chapterElement := range chapterResult.Chapters {
+		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterElement.ChapterName, chapterElement.ChapterHref))
+		nextIndex++
+	}
+	chapterIndex := askSearchSiteTitleSelect(askQs)
+	// _ = chapterResult.Chapters[chapterIndex]
+	chapterElement := chapterResult.Chapters[chapterIndex]
+	chapterResultDB := &ChapterResultDB{
+		ID:           id,
+		CreateAt:     0,
+		NovelSite_ID: searchResult.ID,
+		Chapter:      *chapterResult,
+	}
+	Read(chapterResultDB, chapterElement)
 }
 func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error) {
 	var novelChapter model.NovelChapter
@@ -111,17 +131,15 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 		return &novelChapter, err
 	}
 	host := requestURI.Host
-	fmt.Println("++mmm", host)
 	chapterSelector, ok := conf.RuleConfig.Rule[host]["chapter_selector"].(string)
-	chapterSelector = chapterSelector + " a"
 	if !ok {
 		fmt.Println("22222", ok)
 		return &novelChapter, err
 	}
+	chapterSelector = chapterSelector + " a"
 	var chapterElements []*model.NovelChapterElement
 	c.OnHTML(chapterSelector, func(element *colly.HTMLElement) {
 		html := element.Attr("href")
-		fmt.Println(" text:: ", element.Text, "  html ::::", html)
 		if html == "" {
 			fmt.Println("33333333", "无效dom")
 			return
@@ -140,21 +158,27 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	return &novelChapter, err
 }
 
-func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResultDB) {
-	stmt, err := db.InsertQuery("INSERT INTO novelchapter(title, chapters, origin_url, link_prefix, domain, novelsite_id, createAt) values(?,?,?,?,?,?,?)")
+func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResultDB) (int64, error) {
+	var saveID = int64(-1)
+	stmt, err := db.InsertQuery(db.InsertChapter)
 	if err != nil {
-		log.Fatal("saveNovelChapter)))))))", err)
+		log.Println("saveNovelChapter)))))))", err)
+		return saveID, err
 	}
 	nowTime := time.Now().UnixNano() / 1e6
-	chapters, err := json.Marshal(novelChapter.Chapters)
+	chapterstr, err := json.Marshal(novelChapter.Chapters)
 	if err != nil {
-		log.Fatalf("JSON MARSHALING failed: %s", err)
+		log.Printf("JSON MARSHALING failed: %s \n", err)
+		return saveID, err
 	}
-	log.Println("---", chapters)
-	_, err = db.ExecWithStmt(stmt, []interface{}{novelChapter.Name, chapters, novelChapter.OriginUrl, novelChapter.LinkPrefix, novelChapter.Domain, searchResult.ID, nowTime})
+	chapterResult, err := db.ExecWithStmt(stmt, []interface{}{novelChapter.Name, chapterstr, novelChapter.OriginUrl, novelChapter.LinkPrefix, novelChapter.Domain, searchResult.ID, nowTime})
 	if err != nil {
-		log.Fatal("----", err)
+		log.Println("----", err)
+		return saveID, err
 	}
+	fmt.Println("[list.saveNoivelChapter] chapterResult:: ", chapterResult)
+	saveID, err = chapterResult.LastInsertId()
+	return saveID, err
 }
 
 func askSearchSiteTitleSelect(searchTitleResultArray []string) int {

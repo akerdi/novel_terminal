@@ -12,6 +12,7 @@ import (
 	"novel/fetcher"
 	"novel/model"
 	"os"
+	"time"
 
 	"github.com/gocolly/colly"
 	"jaytaylor.com/html2text"
@@ -28,9 +29,10 @@ var readCmd = &cobra.Command{
 }
 
 type ChapterResultDB struct {
-	Chapter  model.NovelChapter
-	ID       int64 `json:"id"`
-	CreateAt int64 `json:"createAt"`
+	Chapter      model.NovelChapter
+	ID           int64 `json:"id"`
+	CreateAt     int64 `json:"createAt"`
+	NovelSite_ID int64
 }
 
 func ReadCommand(cmd *cobra.Command, args []string) {
@@ -75,8 +77,9 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 				LinkPrefix: link_prefix,
 				Domain:     domain,
 			},
-			ID:       id,
-			CreateAt: createAt,
+			ID:           id,
+			NovelSite_ID: novelsite_id,
+			CreateAt:     createAt,
 		})
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, title, origin_url))
 		nextIndex++
@@ -86,18 +89,22 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("&&&&&&&&", index)
 	askQs = []string{}
 	nextIndex = 0
-	fmt.Printf("******** %+v \n", chapterResults[index].Chapter.Chapters)
 	if len(chapterResults[index].Chapter.Chapters) == 0 {
 		log.Fatalf("小说 %s 没有找到章节。", chapterResults[index].Chapter.Name)
 	}
-	for _, chapterElement := range chapterResults[index].Chapter.Chapters {
+	chapterResult := chapterResults[index]
+	for _, chapterElement := range chapterResult.Chapter.Chapters {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterElement.ChapterName, chapterElement.ChapterHref))
 		nextIndex++
 	}
 	chapterIndex := askSearchSiteTitleSelect(askQs)
 
-	chapterElement := chapterResults[index].Chapter.Chapters[chapterIndex]
-	contentResult, err := parseNovelContent(chapterResults[index], chapterElement)
+	chapterElement := chapterResult.Chapter.Chapters[chapterIndex]
+	Read(chapterResult, chapterElement)
+}
+
+func Read(chapterResult *ChapterResultDB, chapterElement *model.NovelChapterElement) {
+	contentResult, err := parseNovelContent(chapterResult, chapterElement)
 	if err != nil {
 		log.Fatal("=========", err)
 	}
@@ -106,7 +113,22 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal("===++++++,,,, ", err)
 	}
-	fmt.Println(htmlText)
+	stmt, err := db.InsertQuery(db.InsertContent)
+	if err != nil {
+		log.Fatal("insert content err: ", err)
+	}
+	nowTime := time.Now().UnixNano() / 1e6
+	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, htmlText, nowTime, chapterResult.NovelSite_ID, chapterResult.ID})
+	if err != nil {
+		log.Fatal("save content err:: ", err)
+	}
+	// 保存当前
+	// 读取前后章节，保存
+	go fmt.Println(htmlText)
+}
+
+func readyForNextAndPreviewNovelContent(targetIndex int64, chapterResults []*ChapterResultDB) {
+
 }
 
 func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChapterElement) (*model.NovelContent, error) {
