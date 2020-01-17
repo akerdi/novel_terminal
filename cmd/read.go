@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bufio"
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/url"
@@ -34,6 +34,14 @@ type ChapterResultDB struct {
 	CreateAt     int64 `json:"createAt"`
 	NovelSite_ID int64
 }
+type ContentResultDB struct {
+	Content       model.NovelContent
+	ID            int64 `json:"id"`
+	CreateAt      int64 `json:"createAt"`
+	Chapter_ID    int64 `json:"chapter_id"`
+	Site_ID       int64
+	Chapter_INDEX int64
+}
 
 func ReadCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("novelname: ::: ", NovelName)
@@ -61,27 +69,9 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	var askQs []string
 	nextIndex := 0
 	for rows.Next() {
-		var id, novelsite_id, createAt int64
-		var title, chapters, origin_url, link_prefix, domain string
-		_ = rows.Scan(&id, &title, &chapters, &origin_url, &link_prefix, &domain, &createAt, &novelsite_id)
-		var chapterElements []*model.NovelChapterElement
-		byteData := []byte(chapters)
-		if err := json.Unmarshal(byteData, &chapterElements); err != nil {
-			log.Fatal("JSON UNMarshaling failed:: ", err)
-		}
-		chapterResults = append(chapterResults, &ChapterResultDB{
-			Chapter: model.NovelChapter{
-				Name:       title,
-				OriginUrl:  origin_url,
-				Chapters:   chapterElements,
-				LinkPrefix: link_prefix,
-				Domain:     domain,
-			},
-			ID:           id,
-			NovelSite_ID: novelsite_id,
-			CreateAt:     createAt,
-		})
-		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, title, origin_url))
+		chapterResultDB := parseChapterResultDBByRows(rows)
+		chapterResults = append(chapterResults, chapterResultDB)
+		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterResultDB.Chapter.Name, chapterResultDB.Chapter.OriginUrl))
 		nextIndex++
 	}
 
@@ -98,37 +88,73 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 		nextIndex++
 	}
 	chapterIndex := askSearchSiteTitleSelect(askQs)
-
-	chapterElement := chapterResult.Chapter.Chapters[chapterIndex]
-	Read(chapterResult, chapterElement)
+	Read(chapterResult, chapterIndex)
 }
 
-func Read(chapterResult *ChapterResultDB, chapterElement *model.NovelChapterElement) {
+func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
+	contentDBResult, err := getContentDBResult(chapterResult, chapterElementSelectIndex)
+	htmlText, err := html2text.FromString(contentDBResult.Content.Content, html2text.Options{OmitLinks: true})
+	if err != nil {
+		log.Fatal("===++++++,,,, ", err)
+	}
+	fmt.Println(htmlText)
+	// 保存当前
+	// 读取前后章节，保存
+	readyForNextAndPreviewNovelContent(chapterElementSelectIndex, chapterResult.Chapter.Chapters)
+}
+func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) (*ContentResultDB, error) {
+	var contentResultDB ContentResultDB
+	var queryStr = fmt.Sprintf("SELECT * FROM novelcontent WHERE (chapter_index=%d AND novelsite_id=%d AND novelchapter_id=%d) LIMIT 1;", chapterElementSelectIndex, chapterResult.NovelSite_ID, chapterResult.ID)
+	rows, err := db.Query(queryStr)
+	if err != nil {
+		log.Fatal("query database content err:", err)
+	}
+	if rows.Next() {
+		contentResultDB = *parseContentResultDBByRows(rows)
+		return &contentResultDB, nil
+	}
+	// 数据库没有该数据，从网络获取
+	chapterElement := chapterResult.Chapter.Chapters[chapterElementSelectIndex]
 	contentResult, err := parseNovelContent(chapterResult, chapterElement)
 	if err != nil {
 		log.Fatal("=========", err)
 	}
-	// fmt.Printf("     &&&& %s", contentResult)
-	htmlText, err := html2text.FromString(contentResult.Content, html2text.Options{OmitLinks: true})
-	if err != nil {
-		log.Fatal("===++++++,,,, ", err)
-	}
+	fmt.Printf("     &&&& %s", contentResult.Content)
+
 	stmt, err := db.InsertQuery(db.InsertContent)
 	if err != nil {
 		log.Fatal("insert content err: ", err)
 	}
 	nowTime := time.Now().UnixNano() / 1e6
-	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, htmlText, nowTime, chapterResult.NovelSite_ID, chapterResult.ID})
+	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, contentResult.Content, chapterElementSelectIndex, nowTime, chapterResult.NovelSite_ID, chapterResult.ID})
 	if err != nil {
 		log.Fatal("save content err:: ", err)
 	}
-	// 保存当前
-	// 读取前后章节，保存
-	go fmt.Println(htmlText)
+	return getContentDBResult(chapterResult, chapterElementSelectIndex)
 }
 
-func readyForNextAndPreviewNovelContent(targetIndex int64, chapterResults []*ChapterResultDB) {
+func readyForNextAndPreviewNovelContent(targetIndex int64, chapterResults []*model.NovelChapterElement) {
 
+}
+
+func parseContentResultDBByRows(rows *sql.Rows) *ContentResultDB {
+	var id, novelsite_id, chapter_index, novelchapter_id, createAt int64
+	var title, content string
+	_ = rows.Scan(&id, &title, &content, &chapter_index, &createAt, &novelsite_id, &novelchapter_id)
+	return &ContentResultDB{
+		Content: model.NovelContent{
+			NovelName:   "",
+			Title:       title,
+			ContentURL:  "",
+			Content:     content,
+			PreChapter:  "",
+			NextChapter: "",
+		},
+		ID:            id,
+		Site_ID:       novelsite_id,
+		Chapter_ID:    novelchapter_id,
+		Chapter_INDEX: chapter_index,
+	}
 }
 
 func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChapterElement) (*model.NovelContent, error) {
@@ -151,7 +177,7 @@ func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChap
 	if contentSelector == "" {
 		return &novelContent, fmt.Errorf("parseNovelContent %s", "contentSelector is empty")
 	}
-	fmt.Println("+++++++", contentSelector)
+	fmt.Println("+++++++:", contentSelector)
 	c.OnHTML(contentSelector, func(element *colly.HTMLElement) {
 		html, err := element.DOM.Html()
 		if err != nil {

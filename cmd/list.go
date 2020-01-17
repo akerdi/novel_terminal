@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,33 +95,17 @@ func ListCommand(cmd *cobra.Command, args []string) {
 
 	searchResult := searchResults[selectIndex]
 	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
-	chapterResult, err := parseNovelChapter(searchResult)
+	chapterDBResult, err := getChapterDBBySearchResult(searchResult)
 	if err != nil {
-		log.Fatal(")))))))))", err)
+		log.Fatal("^^^^^^^^^", err)
 	}
-	if len(chapterResult.Chapters) == 0 {
-		fmt.Println("获取章节失败, 请试用其他网站")
-		return
-	}
-	id, err := saveNovelChapter(chapterResult, searchResult)
-	if id < 0 || err != nil {
-		log.Fatal("保存章节失败")
-		return
-	}
-	for _, chapterElement := range chapterResult.Chapters {
+	for _, chapterElement := range chapterDBResult.Chapter.Chapters {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterElement.ChapterName, chapterElement.ChapterHref))
 		nextIndex++
 	}
 	chapterIndex := askSearchSiteTitleSelect(askQs)
-	// _ = chapterResult.Chapters[chapterIndex]
-	chapterElement := chapterResult.Chapters[chapterIndex]
-	chapterResultDB := &ChapterResultDB{
-		ID:           id,
-		CreateAt:     0,
-		NovelSite_ID: searchResult.ID,
-		Chapter:      *chapterResult,
-	}
-	Read(chapterResultDB, chapterElement)
+
+	Read(chapterDBResult, chapterIndex)
 }
 func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error) {
 	var novelChapter model.NovelChapter
@@ -158,6 +143,64 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	return &novelChapter, err
 }
 
+func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB, error) {
+	var chapterDBResult ChapterResultDB
+	queryStr := fmt.Sprintf("SELECT * FROM novelchapter WHERE (novelsite_id=%d AND title like '%%%s%%') LIMIT 1;", searchResult.ID, searchResult.SearchResult.Title)
+	rows, err := db.Query(queryStr)
+	if err != nil {
+		log.Fatal("---=======================", err)
+	}
+	if rows.Next() {
+		fmt.Println("----")
+		chapterDBResult = *parseChapterResultDBByRows(rows)
+		return &chapterDBResult, nil
+	}
+	// 去网络获取，同时生成ChapterResultDB
+	chapterResult, err := parseNovelChapter(searchResult)
+	if err != nil {
+		log.Fatal(")))))))))", err)
+	}
+	if len(chapterResult.Chapters) == 0 {
+		fmt.Println("获取章节失败, 请试用其他网站")
+		return &chapterDBResult, nil
+	}
+	id, err := saveNovelChapter(chapterResult, searchResult)
+	if id < 0 || err != nil {
+		log.Fatal("保存章节失败")
+		return &chapterDBResult, nil
+	}
+	chapterDBResult = ChapterResultDB{
+		ID:           id,
+		CreateAt:     0,
+		NovelSite_ID: searchResult.ID,
+		Chapter:      *chapterResult,
+	}
+	return &chapterDBResult, nil
+}
+
+func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
+	var id, novelsite_id, createAt int64
+	var title, chapters, origin_url, link_prefix, domain string
+	_ = rows.Scan(&id, &title, &chapters, &origin_url, &link_prefix, &domain, &createAt, &novelsite_id)
+	var chapterElements []*model.NovelChapterElement
+	byteData := []byte(chapters)
+	if err := json.Unmarshal(byteData, &chapterElements); err != nil {
+		log.Fatal("-----", err)
+	}
+	return &ChapterResultDB{
+		Chapter: model.NovelChapter{
+			Name:       title,
+			OriginUrl:  origin_url,
+			Chapters:   chapterElements,
+			LinkPrefix: link_prefix,
+			Domain:     domain,
+		},
+		ID:           id,
+		NovelSite_ID: novelsite_id,
+		CreateAt:     createAt,
+	}
+}
+
 func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResultDB) (int64, error) {
 	var saveID = int64(-1)
 	stmt, err := db.InsertQuery(db.InsertChapter)
@@ -181,7 +224,7 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 	return saveID, err
 }
 
-func askSearchSiteTitleSelect(searchTitleResultArray []string) int {
+func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 	qs := []*survey.Question{
 		{
 			Name: "site",
@@ -202,7 +245,7 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int {
 	}
 	fmt.Printf("%s chose %s. \n", "1111", answers.ChooseSite)
 	indexStr := strings.Split(answers.ChooseSite, " ||| ")[0]
-	index, _ := strconv.Atoi(indexStr)
+	index, _ := strconv.ParseInt(indexStr, 10, 64)
 	fmt.Printf("+++++++ %d\n", index)
 	return index
 }

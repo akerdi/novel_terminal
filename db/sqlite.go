@@ -37,7 +37,10 @@ var (
 		createAt INTEGER NOT NULL,
 		novelsite_id INTEGER,
 		FOREIGN KEY (novelsite_id) REFERENCES novelsite(id)
-		);`
+		);
+		CREATE UNIQUE INDEX IF NOT EXISTS origin_url_unique
+		ON novelchapter (origin_url);
+		`
 	/*
 		chapter_index 章节索引unique
 	*/
@@ -52,14 +55,14 @@ var (
 		novelchapter_id INTEGER,
 		FOREIGN KEY (novelsite_id) REFERENCES novcelsite(id),
 		FOREIGN KEY (novelchapter_id) REFERENCES novelchapter(id)
-		)`
+		);`
 	createNovelContentIndex = `
 	CREATE UNIQUE INDEX IF NOT EXISTS site_chapter_chapterIndex
-	on novelcontent (novelsite_id, novelchapter_id, chapter_index)
+	ON novelcontent (novelsite_id, novelchapter_id, chapter_index)
 	`
 	InsertChapter = "INSERT INTO novelchapter(title, chapters, origin_url, link_prefix, domain, novelsite_id, createAt) values(?,?,?,?,?,?,?)"
 	InsertSite    = "INSERT INTO novelsite(href, title, isParse, host, kw, createAt) values(?,?,?,?,?,?)"
-	InsertContent = "INSERT INTO novelcontent(title, content, creatAt, novelsite_id, novelchapter_id) values(?,?,?,?,?)"
+	InsertContent = "INSERT INTO novelcontent(title, content, chapter_index, createAt, novelsite_id, novelchapter_id) values(?,?,?,?,?,?)"
 )
 
 func SetUpdateDataBase() {
