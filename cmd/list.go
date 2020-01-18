@@ -63,20 +63,11 @@ func ListCommand(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 	searchResults := make([]*SearchResultDB, 0)
-	var askQs []string
-	nextIndex := 0
 	for rows.Next() {
 		var id, createAt int64
 		var href, title, host, kw string
 		var isParse bool
 		_ = rows.Scan(&id, &href, &title, &isParse, &host, &kw, &createAt)
-		fmt.Println(id)
-		fmt.Println(createAt)
-		fmt.Println(href)
-		fmt.Println(title)
-		fmt.Println(host)
-		fmt.Println(kw)
-		fmt.Println(isParse)
 		searchResults = append(searchResults, &SearchResultDB{
 			SearchResult: model.SearchResult{
 				Href:    href,
@@ -86,10 +77,18 @@ func ListCommand(cmd *cobra.Command, args []string) {
 			},
 			ID: id,
 		})
-		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, title, host))
+	}
+	ToReadBySearchResults(searchResults)
+}
+
+// 根据searchResults 去选取网站对应小说目录
+func ToReadBySearchResults(searchResults []*SearchResultDB) {
+	var askQs []string
+	nextIndex := 0
+	for _, searchResult := range searchResults {
+		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, searchResult.SearchResult.Title, searchResult.SearchResult.Host))
 		nextIndex++
 	}
-	fmt.Println("askQs", askQs)
 	selectIndex := askSearchSiteTitleSelect(askQs)
 	fmt.Println("-------------", selectIndex)
 
@@ -107,6 +106,8 @@ func ListCommand(cmd *cobra.Command, args []string) {
 
 	Read(chapterDBResult, chapterIndex)
 }
+
+// 根据网站对应小说目录，先查询本地是否有缓存，否则网络获取
 func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error) {
 	var novelChapter model.NovelChapter
 	c := fetcher.NewCollector()
@@ -143,6 +144,7 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	return &novelChapter, err
 }
 
+// 根据选择的网站对应的小说条目, 用户前往选取小说
 func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB, error) {
 	var chapterDBResult ChapterResultDB
 	queryStr := fmt.Sprintf("SELECT * FROM novelchapter WHERE (novelsite_id=%d AND title like '%%%s%%') LIMIT 1;", searchResult.ID, searchResult.SearchResult.Title)
@@ -178,6 +180,7 @@ func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB,
 	return &chapterDBResult, nil
 }
 
+// 根据sql.Rows 得到ChapterResultDB
 func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
 	var id, novelsite_id, createAt int64
 	var title, chapters, origin_url, link_prefix, domain string
@@ -201,6 +204,7 @@ func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
 	}
 }
 
+// 保存选取的网站，保存该网站里面的对应小说完整数据: 章节信息
 func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResultDB) (int64, error) {
 	var saveID = int64(-1)
 	stmt, err := db.InsertQuery(db.InsertChapter)
@@ -224,6 +228,7 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 	return saveID, err
 }
 
+// 输入字符串数据得到用户选取的index
 func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 	qs := []*survey.Question{
 		{

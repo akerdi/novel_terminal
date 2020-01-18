@@ -56,6 +56,7 @@ func GotoFind() {
 
 func afterSearchNovel(keyword string) {
 	var searchSiteResultArray []string
+	var searchSiteResults []*SearchResultDB
 	for index, result := range searchResults {
 		log.Printf("4result::: %+v \n", result)
 		askStr := fmt.Sprintf("%d ||| %s %s", index, result.Title, result.Host)
@@ -72,10 +73,12 @@ func afterSearchNovel(keyword string) {
 			log.Fatal("meet err: ", err)
 		}
 		log.Println("======", res)
+		searchSiteResults := append(searchSiteResults, &SearchResultDB{})
 	}
 	fmt.Println("searchSiteResultArray:::", searchSiteResultArray)
 	fmt.Println("searchSiteResultArray[0]", searchSiteResultArray[0])
-	askSearchSiteToSelect(searchSiteResultArray)
+	// askSearchSiteToSelect(searchSiteResultArray)
+	ToReadBySearchResults(searchSiteResults)
 }
 
 func askSearchSiteToSelect(searchSiteResultArray []string) {

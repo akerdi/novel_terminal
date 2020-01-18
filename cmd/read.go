@@ -65,24 +65,32 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// if !rows.Next() {
+	// 	log.Fatal("没有找到对应的小说")
+	// }
 	chapterResults := make([]*ChapterResultDB, 0)
 	var askQs []string
 	nextIndex := 0
 	for rows.Next() {
 		chapterResultDB := parseChapterResultDBByRows(rows)
-		chapterResults = append(chapterResults, chapterResultDB)
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterResultDB.Chapter.Name, chapterResultDB.Chapter.OriginUrl))
 		nextIndex++
+		chapterResults = append(chapterResults, chapterResultDB)
 	}
-
+	// 选取想要的网站和小说
 	index := askSearchSiteTitleSelect(askQs)
-	fmt.Println("&&&&&&&&", index)
-	askQs = []string{}
-	nextIndex = 0
-	if len(chapterResults[index].Chapter.Chapters) == 0 {
-		log.Fatalf("小说 %s 没有找到章节。", chapterResults[index].Chapter.Name)
-	}
 	chapterResult := chapterResults[index]
+
+	selectChapterToRead(chapterResult)
+}
+
+// 选取章节
+func selectChapterToRead(chapterResult *ChapterResultDB) {
+	var askQs []string
+	nextIndex := 0
+	if len(chapterResult.Chapter.Chapters) == 0 {
+		log.Fatalf("小说 %s 没有找到章节。", chapterResult.Chapter.Name)
+	}
 	for _, chapterElement := range chapterResult.Chapter.Chapters {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterElement.ChapterName, chapterElement.ChapterHref))
 		nextIndex++
@@ -91,6 +99,7 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	Read(chapterResult, chapterIndex)
 }
 
+// Read 开始读取该章节
 func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
 	contentDBResult, err := getContentDBResult(chapterResult, chapterElementSelectIndex)
 	htmlText, err := html2text.FromString(contentDBResult.Content.Content, html2text.Options{OmitLinks: true})
@@ -101,7 +110,29 @@ func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
 	// 保存当前
 	// 读取前后章节，保存
 	readyForNextAndPreviewNovelContent(chapterElementSelectIndex, chapterResult.Chapter.Chapters)
+outerloop:
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		readStr, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal("dododo err: ", err)
+		}
+		log.Println("*******", readStr)
+		switch readStr {
+		case "q\n":
+			log.Println("~~~~~~~")
+			// 返回上一层
+			selectChapterToRead(chapterResult)
+			break outerloop
+		case "a\n":
+			// 选取上一页
+		case "b\n":
+			// 选取下一页
+		}
+	}
 }
+
+// 根据用户选取文章对应章节，得到该章节数据
 func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) (*ContentResultDB, error) {
 	var contentResultDB ContentResultDB
 	var queryStr = fmt.Sprintf("SELECT * FROM novelcontent WHERE (chapter_index=%d AND novelsite_id=%d AND novelchapter_id=%d) LIMIT 1;", chapterElementSelectIndex, chapterResult.NovelSite_ID, chapterResult.ID)
@@ -133,10 +164,12 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 	return getContentDBResult(chapterResult, chapterElementSelectIndex)
 }
 
+// 缓存上下页数据
 func readyForNextAndPreviewNovelContent(targetIndex int64, chapterResults []*model.NovelChapterElement) {
 
 }
 
+// 根据sql.Rows 转换得到数据库对象
 func parseContentResultDBByRows(rows *sql.Rows) *ContentResultDB {
 	var id, novelsite_id, chapter_index, novelchapter_id, createAt int64
 	var title, content string
@@ -157,6 +190,7 @@ func parseContentResultDBByRows(rows *sql.Rows) *ContentResultDB {
 	}
 }
 
+// 解析文章content
 func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChapterElement) (*model.NovelContent, error) {
 	var novelContent model.NovelContent
 	var html string
