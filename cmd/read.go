@@ -126,8 +126,21 @@ outerloop:
 			break outerloop
 		case "a\n":
 			// 选取上一页
+			chapterElementSelectIndex--
+			if chapterElementSelectIndex <= 0 {
+				log.Println("已经是第一章/页,不能再往前了")
+				return
+			}
+			Read(chapterResult, chapterElementSelectIndex)
 		case "b\n":
 			// 选取下一页
+			chapterElementSelectIndex++
+			chaptersLen := int64(len(chapterResult.Chapter.Chapters))
+			if chapterElementSelectIndex >= chaptersLen {
+				log.Println("已经是最后一章/页, 不能再往后了")
+				return
+			}
+			Read(chapterResult, chapterElementSelectIndex)
 		}
 	}
 }

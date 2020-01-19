@@ -73,7 +73,11 @@ func afterSearchNovel(keyword string) {
 			log.Fatal("meet err: ", err)
 		}
 		log.Println("======", res)
-		searchSiteResults := append(searchSiteResults, &SearchResultDB{})
+		id, _ := res.LastInsertId()
+		searchSiteResults = append(searchSiteResults, &SearchResultDB{
+			ID:           id,
+			SearchResult: *result,
+		})
 	}
 	fmt.Println("searchSiteResultArray:::", searchSiteResultArray)
 	fmt.Println("searchSiteResultArray[0]", searchSiteResultArray[0])

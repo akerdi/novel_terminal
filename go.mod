@@ -10,6 +10,7 @@ require (
 	github.com/antchfx/xmlquery v1.2.2 // indirect
 	github.com/antchfx/xpath v1.1.3 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/go-xorm/xorm v0.7.9
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gocolly/colly v1.2.0
 	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7 // indirect

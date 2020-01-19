@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var engine *xorm.Engine
 
 var (
 	DBdf              *sql.DB
