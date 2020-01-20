@@ -247,6 +247,7 @@ func init() {
 		"www.kanshuzhong.com":      {"link_prefix": "0", "chapter_selector": ".bookcontent", "content_selector": ".textcontent"},
 		"www.siluke.tw":            {"link_prefix": "0", "chapter_selector": "#list", "content_selector": "#content"},
 		"www.qianpian.net":         {"link_prefix": "1", "chapter_selector": "#readerlist", "content_selector": "#content"},
+		"www.xsbiquge.com":         {"link_prefix": "0", "chapter_selector": "#list", "content_selector": "#content"},
 	}
 	RuleConfig.IgnoreDomain = map[string]int{
 		"www.17k.com": 1, "mm.17k.com": 1, "www.xs8.cn": 1, "www.zongheng.com": 1, "yunqi.qq.com": 1, "chuangshi.qq.com": 1,

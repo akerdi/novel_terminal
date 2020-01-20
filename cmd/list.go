@@ -59,6 +59,7 @@ func ListCommand(cmd *cobra.Command, args []string) {
 	query = fmt.Sprintf("SELECT * FROM novelsite as n WHERE (%s)", likeString)
 	fmt.Println("##########", query)
 	rows, err := db.Query(query)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,6 +124,7 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 		return &novelChapter, err
 	}
 	chapterSelector = chapterSelector + " a"
+	fmt.Println("parseNovelChapter chapterSelector ", chapterSelector)
 	var chapterElements []*model.NovelChapterElement
 	c.OnHTML(chapterSelector, func(element *colly.HTMLElement) {
 		html := element.Attr("href")
@@ -135,6 +137,7 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 		chapterElement.ChapterHref = html
 		chapterElements = append(chapterElements, &chapterElement)
 	})
+	fmt.Println("parseNovelChapter href: ", searchResult.SearchResult.Href)
 	err = c.Visit(searchResult.SearchResult.Href)
 	novelChapter.Chapters = chapterElements
 	novelChapter.Name = searchResult.SearchResult.Title
@@ -149,6 +152,7 @@ func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB,
 	var chapterDBResult ChapterResultDB
 	queryStr := fmt.Sprintf("SELECT * FROM novelchapter WHERE (novelsite_id=%d AND title like '%%%s%%') LIMIT 1;", searchResult.ID, searchResult.SearchResult.Title)
 	rows, err := db.Query(queryStr)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal("---=======================", err)
 	}
@@ -248,7 +252,7 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 		fmt.Println(err.Error())
 		return -1
 	}
-	fmt.Printf("%s chose %s. \n", "1111", answers.ChooseSite)
+	fmt.Printf("%s chose %s\n", "1111", answers.ChooseSite)
 	indexStr := strings.Split(answers.ChooseSite, " ||| ")[0]
 	index, _ := strconv.ParseInt(indexStr, 10, 64)
 	fmt.Printf("+++++++ %d\n", index)

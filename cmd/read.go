@@ -62,6 +62,7 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("likeString::: ", likeString)
 	query := fmt.Sprintf("SELECT * FROM novelchapter as n WHERE (%s)", likeString)
 	rows, err := db.Query(query)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,6 +151,7 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 	var contentResultDB ContentResultDB
 	var queryStr = fmt.Sprintf("SELECT * FROM novelcontent WHERE (chapter_index=%d AND novelsite_id=%d AND novelchapter_id=%d) LIMIT 1;", chapterElementSelectIndex, chapterResult.NovelSite_ID, chapterResult.ID)
 	rows, err := db.Query(queryStr)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal("query database content err:", err)
 	}

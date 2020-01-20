@@ -4,13 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var engine *xorm.Engine
-
 var (
+	DBdf              *sql.DB
 	create_NOVEL_SITE = `
 	CREATE TABLE IF NOT EXISTS novelsite (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +68,8 @@ var (
 func SetUpdateDataBase() {
 	fmt.Println("SetUpdateDataBase:", "start")
 	db, err := sql.Open("sqlite3", "./novel.db")
-	defer db.Close()
+	DBdf = db
+	// defer db.Close()
 	checkErr(err)
 	// enable foreign_keys
 	tx, _ := db.Begin()
@@ -97,6 +96,17 @@ func SetUpdateDataBase() {
 	res, err = stmt.Exec()
 	checkErr(err)
 	fmt.Println("create novel content compose index success")
+}
+func InsertQuery(query string) (*sql.Stmt, error) {
+	stmt, err := DBdf.Prepare(query)
+	return stmt, err
+}
+func ExecWithStmt(stmt *sql.Stmt, param []interface{}) (sql.Result, error) {
+	res, err := stmt.Exec(param...)
+	return res, err
+}
+func Query(queryString string) (*sql.Rows, error) {
+	return DBdf.Query(queryString)
 }
 func checkErr(err error) {
 	if err != nil {
