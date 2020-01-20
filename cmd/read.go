@@ -132,7 +132,7 @@ outerloop:
 				return
 			}
 			Read(chapterResult, chapterElementSelectIndex)
-		case "b\n":
+		case "d\n":
 			// 选取下一页
 			chapterElementSelectIndex++
 			chaptersLen := int64(len(chapterResult.Chapter.Chapters))

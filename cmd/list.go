@@ -164,7 +164,7 @@ func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB,
 	}
 	if len(chapterResult.Chapters) == 0 {
 		fmt.Println("获取章节失败, 请试用其他网站")
-		return &chapterDBResult, nil
+		return &chapterDBResult, fmt.Errorf("获取章节失败 %d章节", 0)
 	}
 	id, err := saveNovelChapter(chapterResult, searchResult)
 	if id < 0 || err != nil {
