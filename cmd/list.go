@@ -50,19 +50,19 @@ func ListCommand(cmd *cobra.Command, args []string) {
 	segmenter.LoadDictionary("dictionary.txt")
 	text := []byte(NovelName)
 	segments := segmenter.Segment(text)
+	likeArray := []string{NovelName}
 	var likeString = fmt.Sprintf("n.title like '%%%s%%'", NovelName)
 	for _, seg := range segments {
-		fmt.Printf("%+v \n", seg.Token().Text())
+		likeArray = append(likeArray, seg.Token().Text())
 		likeString = fmt.Sprintf("%s or n.title like '%%%s%%'", likeString, seg.Token().Text())
 	}
-	fmt.Println("likeString:::", likeString)
 	query = fmt.Sprintf("SELECT * FROM novelsite as n WHERE (%s)", likeString)
-	fmt.Println("##########", query)
 	rows, err := db.Query(query)
-	defer rows.Close()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("list 查询小说站点出错: ", err)
 	}
+	defer rows.Close()
+
 	searchResults := make([]*SearchResultDB, 0)
 	for rows.Next() {
 		var id, createAt int64
@@ -79,6 +79,9 @@ func ListCommand(cmd *cobra.Command, args []string) {
 			ID: id,
 		})
 	}
+	if len(searchResults) == 0 {
+		log.Fatal("没有找到可用的书本: ", strings.Join(likeArray, " "))
+	}
 	ToReadBySearchResults(searchResults)
 }
 
@@ -91,13 +94,12 @@ func ToReadBySearchResults(searchResults []*SearchResultDB) {
 		nextIndex++
 	}
 	selectIndex := askSearchSiteTitleSelect(askQs)
-	fmt.Println("-------------", selectIndex)
 
 	searchResult := searchResults[selectIndex]
 	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
 	chapterDBResult, err := getChapterDBBySearchResult(searchResult)
 	if err != nil {
-		log.Fatal("^^^^^^^^^", err)
+		log.Fatal("获取本地书本失败: ", err)
 	}
 	for _, chapterElement := range chapterDBResult.Chapter.Chapters {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterElement.ChapterName, chapterElement.ChapterHref))
@@ -114,22 +116,19 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	c := fetcher.NewCollector()
 	requestURI, err := url.ParseRequestURI(searchResult.SearchResult.Href)
 	if err != nil {
-		fmt.Println("111111", err)
 		return &novelChapter, err
 	}
 	host := requestURI.Host
 	chapterSelector, ok := conf.RuleConfig.Rule[host]["chapter_selector"].(string)
 	if !ok {
-		fmt.Println("22222", ok)
 		return &novelChapter, err
 	}
 	chapterSelector = chapterSelector + " a"
-	fmt.Println("parseNovelChapter chapterSelector ", chapterSelector)
 	var chapterElements []*model.NovelChapterElement
 	c.OnHTML(chapterSelector, func(element *colly.HTMLElement) {
 		html := element.Attr("href")
 		if html == "" {
-			fmt.Println("33333333", "无效dom")
+			fmt.Println("无效dom")
 			return
 		}
 		var chapterElement model.NovelChapterElement
@@ -154,17 +153,16 @@ func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB,
 	rows, err := db.Query(queryStr)
 	defer rows.Close()
 	if err != nil {
-		log.Fatal("---=======================", err)
+		log.Fatal("getChapterDBBySearchResult err: ", err)
 	}
 	if rows.Next() {
-		fmt.Println("----")
 		chapterDBResult = *parseChapterResultDBByRows(rows)
 		return &chapterDBResult, nil
 	}
 	// 去网络获取，同时生成ChapterResultDB
 	chapterResult, err := parseNovelChapter(searchResult)
 	if err != nil {
-		log.Fatal(")))))))))", err)
+		log.Fatal(err)
 	}
 	if len(chapterResult.Chapters) == 0 {
 		fmt.Println("获取章节失败, 请试用其他网站")
@@ -192,7 +190,7 @@ func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
 	var chapterElements []*model.NovelChapterElement
 	byteData := []byte(chapters)
 	if err := json.Unmarshal(byteData, &chapterElements); err != nil {
-		log.Fatal("-----", err)
+		log.Fatal(err)
 	}
 	return &ChapterResultDB{
 		Chapter: model.NovelChapter{
@@ -213,7 +211,6 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 	var saveID = int64(-1)
 	stmt, err := db.InsertQuery(db.InsertChapter)
 	if err != nil {
-		log.Println("saveNovelChapter)))))))", err)
 		return saveID, err
 	}
 	nowTime := time.Now().UnixNano() / 1e6
@@ -224,7 +221,6 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 	}
 	chapterResult, err := db.ExecWithStmt(stmt, []interface{}{novelChapter.Name, chapterstr, novelChapter.OriginUrl, novelChapter.LinkPrefix, novelChapter.Domain, searchResult.ID, nowTime})
 	if err != nil {
-		log.Println("----", err)
 		return saveID, err
 	}
 	fmt.Println("[list.saveNoivelChapter] chapterResult:: ", chapterResult)
@@ -238,7 +234,7 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 		{
 			Name: "site",
 			Prompt: &survey.Select{
-				Message: "Choose a site to scrawler:",
+				Message: "请您作出选择:",
 				Options: searchTitleResultArray,
 				Default: searchTitleResultArray[0],
 			},
@@ -252,10 +248,9 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 		fmt.Println(err.Error())
 		return -1
 	}
-	fmt.Printf("%s chose %s\n", "1111", answers.ChooseSite)
 	indexStr := strings.Split(answers.ChooseSite, " ||| ")[0]
 	index, _ := strconv.ParseInt(indexStr, 10, 64)
-	fmt.Printf("+++++++ %d\n", index)
+	fmt.Printf("您选择了 %d\n", index)
 	return index
 }
 

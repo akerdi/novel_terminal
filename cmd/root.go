@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/go-redis/redis"
 	"github.com/spf13/cobra"
 )
@@ -26,12 +24,4 @@ var RootCmd = &cobra.Command{
 }
 
 func dbConnect(cmd *cobra.Command, args []string) {
-	// client, err := rdb.Connect(DBAddr, DBPassword)
-	// if err != nil {
-	// 	fmt.Println("novel failed to connect to redis, configuration is not correct", err.Error())
-	// 	os.Exit(1)
-	// }
-	// redisClient = client
-	// fmt.Println("%%%%%%%%", redisClient)
-	fmt.Println("database setup")
 }

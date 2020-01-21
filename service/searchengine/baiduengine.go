@@ -57,14 +57,19 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 			return
 		}
 		host := response.Request.URL.Host
+
 		_, ok := conf.RuleConfig.IgnoreDomain[host]
+		fmt.Println("host:: ", host, " 是否忽略该网站?: ", ok)
 		if ok {
 			return
 		}
 		isParse := engine.CheckIsParse(host)
+		fmt.Println("host:: ", host, " 是否生成模板?: ", isParse)
+		if !isParse {
+			return
+		}
 		result := &model.SearchResult{Href: realURL, Title: title, IsParse: isParse, Host: host}
 		engine.parseResultFunc(result)
-		// _, ok := conf.RuleConfig.IgnoreDomain[host]
 	})
 	err := c.Visit(href)
 	if err != nil {

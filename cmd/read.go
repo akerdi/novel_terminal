@@ -12,6 +12,7 @@ import (
 	"novel/fetcher"
 	"novel/model"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -54,12 +55,13 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	segmenter.LoadDictionary("dictionary.txt")
 	text := []byte(NovelName)
 	segments := segmenter.Segment(text)
+	likeArray := []string{NovelName}
 	likeString := fmt.Sprintf("n.title like '%%%s%%'", NovelName)
 	for _, seg := range segments {
+		likeArray = append(likeArray, seg.Token().Text())
 		fmt.Printf("%+v \n", seg.Token().Text())
 		likeString = fmt.Sprintf("%s or n.title like '%%%s%%'", likeString, seg.Token().Text())
 	}
-	fmt.Println("likeString::: ", likeString)
 	query := fmt.Sprintf("SELECT * FROM novelchapter as n WHERE (%s)", likeString)
 	rows, err := db.Query(query)
 	defer rows.Close()
@@ -78,10 +80,12 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 		nextIndex++
 		chapterResults = append(chapterResults, chapterResultDB)
 	}
+	if len(chapterResults) == 0 {
+		log.Fatal("没有找到可用的书本: ", strings.Join(likeArray, " "))
+	}
 	// 选取想要的网站和小说
 	index := askSearchSiteTitleSelect(askQs)
 	chapterResult := chapterResults[index]
-
 	selectChapterToRead(chapterResult)
 }
 
@@ -105,7 +109,7 @@ func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
 	contentDBResult, err := getContentDBResult(chapterResult, chapterElementSelectIndex)
 	htmlText, err := html2text.FromString(contentDBResult.Content.Content, html2text.Options{OmitLinks: true})
 	if err != nil {
-		log.Fatal("===++++++,,,, ", err)
+		log.Fatal("文章转义出错 ", err)
 	}
 	fmt.Println(htmlText)
 	// 保存当前
@@ -118,10 +122,8 @@ outerloop:
 		if err != nil {
 			log.Fatal("dododo err: ", err)
 		}
-		log.Println("*******", readStr)
 		switch readStr {
 		case "q\n":
-			log.Println("~~~~~~~")
 			// 返回上一层
 			selectChapterToRead(chapterResult)
 			break outerloop
@@ -163,9 +165,8 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 	chapterElement := chapterResult.Chapter.Chapters[chapterElementSelectIndex]
 	contentResult, err := parseNovelContent(chapterResult, chapterElement)
 	if err != nil {
-		log.Fatal("=========", err)
+		log.Fatal("解析文章正文出错: ", err)
 	}
-	fmt.Printf("     &&&& %s", contentResult.Content)
 
 	stmt, err := db.InsertQuery(db.InsertContent)
 	if err != nil {
@@ -174,7 +175,7 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 	nowTime := time.Now().UnixNano() / 1e6
 	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, contentResult.Content, chapterElementSelectIndex, nowTime, chapterResult.NovelSite_ID, chapterResult.ID})
 	if err != nil {
-		log.Fatal("save content err:: ", err)
+		log.Fatal("save content err: ", err)
 	}
 	return getContentDBResult(chapterResult, chapterElementSelectIndex)
 }
@@ -217,20 +218,17 @@ func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChap
 	} else if chapter.Chapter.LinkPrefix == "0" {
 		html = common.UrlJoin(chapterElement.ChapterHref, chapter.Chapter.Domain)
 	}
-	fmt.Println("href html:: ", html)
 	c := fetcher.NewCollector()
 	requestURI, _ := url.ParseRequestURI(chapter.Chapter.Domain)
 	host := requestURI.Host
-	fmt.Println("--------------", host)
 	contentSelector, _ := conf.RuleConfig.Rule[host]["content_selector"].(string)
 	if contentSelector == "" {
 		return &novelContent, fmt.Errorf("parseNovelContent %s", "contentSelector is empty")
 	}
-	fmt.Println("+++++++:", contentSelector)
 	c.OnHTML(contentSelector, func(element *colly.HTMLElement) {
 		html, err := element.DOM.Html()
 		if err != nil {
-			log.Fatal("=====111 : ", err)
+			log.Fatal("解析文章正文遇到出错 : ", err)
 		}
 		novelContent.Content = html
 		novelContent.Title = chapterElement.ChapterName

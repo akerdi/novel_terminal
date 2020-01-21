@@ -16,11 +16,7 @@ var exitCmd = &cobra.Command{
 }
 
 func RunCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("1111")
-	for {
-		break
-	}
-	fmt.Println("22222")
+	fmt.Println("exit? ok")
 	os.Exit(1)
 }
 

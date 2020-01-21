@@ -7,14 +7,11 @@ import (
 	"novel/db"
 	"novel/model"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"novel/service/searchengine"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +29,6 @@ func FindCommand(cmd *cobra.Command, args []string) {
 	} else {
 		GotoFind()
 	}
-	fmt.Println(args)
-
 }
 
 func GotoFind() {
@@ -44,7 +39,6 @@ func GotoFind() {
 		if err != nil {
 			fmt.Println("read err: ", err)
 		}
-		fmt.Println("result:::", kw)
 		startSearchEngine(kw)
 		keyword = kw
 		if len(searchResults) > 0 {
@@ -58,57 +52,24 @@ func afterSearchNovel(keyword string) {
 	var searchSiteResultArray []string
 	var searchSiteResults []*SearchResultDB
 	for index, result := range searchResults {
-		log.Printf("4result::: %+v \n", result)
 		askStr := fmt.Sprintf("%d ||| %s %s", index, result.Title, result.Host)
-		log.Println("askStr:::", askStr)
 		searchSiteResultArray = append(searchSiteResultArray, askStr)
 		stmt, err := db.InsertQuery(db.InsertSite)
 		if err != nil {
-			log.Fatal("))))))))", err)
+			log.Fatal(err)
 		}
 		nowTime := time.Now().UnixNano() / 1e6
-		fmt.Println("^^^^^^^^", nowTime)
 		res, err := db.ExecWithStmt(stmt, []interface{}{result.Href, result.Title, true, result.Host, keyword, nowTime})
 		if err != nil {
-			log.Fatal("meet err: ", err)
+			log.Fatal("database exec meet err: ", err)
 		}
-		log.Println("======", res)
 		id, _ := res.LastInsertId()
 		searchSiteResults = append(searchSiteResults, &SearchResultDB{
 			ID:           id,
 			SearchResult: *result,
 		})
 	}
-	fmt.Println("searchSiteResultArray:::", searchSiteResultArray)
-	fmt.Println("searchSiteResultArray[0]", searchSiteResultArray[0])
-	// askSearchSiteToSelect(searchSiteResultArray)
 	ToReadBySearchResults(searchSiteResults)
-}
-
-func askSearchSiteToSelect(searchSiteResultArray []string) {
-	qs := []*survey.Question{
-		{
-			Name: "title",
-			Prompt: &survey.Select{
-				Message: "Choose a title:",
-				Options: searchSiteResultArray,
-				Default: searchSiteResultArray[0],
-			},
-		},
-	}
-	answers := struct {
-		ChooseTitle string `survey:"title"`
-	}{}
-	err := survey.Ask(qs, &answers)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	fmt.Printf("%s chose %s. \n", "1111", answers.ChooseTitle)
-	indexStr := strings.Split(answers.ChooseTitle, " ||| ")[0]
-	index, _ := strconv.Atoi(indexStr)
-	fmt.Printf("+++++++ %d", index)
-
 }
 
 func readRuneFunc() rune {
@@ -127,23 +88,18 @@ type EngineSearch interface {
 }
 
 func startSearchEngine(novelName string) []*model.SearchResult {
-	fmt.Println("------", novelName)
 	group := sync.WaitGroup{}
 	results := make([]*model.SearchResult, 0)
 	group.Add(1)
-	fmt.Println("22222222")
 	searchEngine := searchengine.NewBaiduSearchEngine(func(result *model.SearchResult) {
-		fmt.Println("333333")
 		results = append(results, result)
 	})
-	fmt.Println("4444444")
 	go searchEngine.EngineRun(novelName, &group)
-	fmt.Println("5555555")
 	group.Wait()
-	fmt.Println("6666666")
 	searchResults = results
-	if len(results) > 0 {
-		fmt.Printf("------%v\n ", results)
+	if len(results) == 0 {
+		fmt.Println("当前没有找到被解析的小说网站, 请联系aker QQ mail:767838865@qq.com")
+		os.Exit(1)
 	}
 	return results
 }
