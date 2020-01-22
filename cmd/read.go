@@ -45,12 +45,13 @@ type ContentResultDB struct {
 }
 
 func ReadCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("novelname: ::: ", NovelName)
 	if NovelName == "" {
+		fmt.Println("请输入小说名+Enter键: ")
 		reader := bufio.NewReader(os.Stdin)
 		kw, _ := reader.ReadString('\n')
 		NovelName = kw
 	}
+	fmt.Println("您要找的小说是: ", NovelName)
 	var segmenter sego.Segmenter
 	segmenter.LoadDictionary("dictionary.txt")
 	text := []byte(NovelName)
@@ -122,12 +123,13 @@ outerloop:
 		if err != nil {
 			log.Fatal("dododo err: ", err)
 		}
-		switch readStr {
-		case "q\n":
+		readStrByte := []byte(readStr)
+		switch readStrByte[0] {
+		case 'q':
 			// 返回上一层
 			selectChapterToRead(chapterResult)
 			break outerloop
-		case "a\n":
+		case 'a':
 			// 选取上一页
 			chapterElementSelectIndex--
 			if chapterElementSelectIndex <= 0 {
@@ -135,7 +137,7 @@ outerloop:
 				return
 			}
 			Read(chapterResult, chapterElementSelectIndex)
-		case "d\n":
+		case 'd':
 			// 选取下一页
 			chapterElementSelectIndex++
 			chaptersLen := int64(len(chapterResult.Chapter.Chapters))

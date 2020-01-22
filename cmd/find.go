@@ -22,7 +22,6 @@ var findCmd = &cobra.Command{
 }
 
 func FindCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("novelname ::: ", NovelName)
 	if NovelName != "" {
 		startSearchEngine(NovelName)
 		afterSearchNovel(NovelName)
@@ -32,6 +31,7 @@ func FindCommand(cmd *cobra.Command, args []string) {
 }
 
 func GotoFind() {
+	fmt.Println("请输入小说名+Enter键: ")
 	var keyword string
 	for {
 		reader := bufio.NewReader(os.Stdin)
@@ -88,6 +88,7 @@ type EngineSearch interface {
 }
 
 func startSearchEngine(novelName string) []*model.SearchResult {
+	fmt.Println("您要找的小说是: ", NovelName)
 	group := sync.WaitGroup{}
 	results := make([]*model.SearchResult, 0)
 	group.Add(1)

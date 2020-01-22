@@ -55,25 +55,38 @@ In the captor, use ↑ ↓ to choose preview or next captor
 
 
 
-## Usage 1.0
+# Usage 1.0
 
-### find
+# 查看帮助
 
-        novel find # 不输入关键词，则会等待用户输入
-        novel find --novelname 一片雨
+./novel (windows: .\novel.exe)
 
-find 是用于寻找小说的关键词，随后#novel 会将该搜索列表缓存
+# 搜索书目
 
-### list
+./novel find (windows: .\novel.exe find)
 
-        novel list # 不输入关键词，同上等待用户输入
-        novel list --novelname 大侠
+### 指定搜索书目
 
-list 是用于展开该小说分类，同时尝试读取该网站的章节，如果读取失败，则 动作[read] 也无效
+./novel find --novelname 斗罗大陆 (windows: .\novel.exe find --novelname 斗罗大陆)
 
-### read
+# 列出本地书目
 
-        novel read # 没有参数同上
-        novel read --novelname 超级英雄
+./novel list (windows: .\novel.exe list)
 
-read 用于选取对应的小说进行阅读。该选项来源于 动作[list]
+### 指定列出本地书目
+
+./novel list --novelname 斗罗 (windows: .\novel.exe list --novelname 斗罗)
+
+# 直接阅读本地书目
+
+./novel read (windows: .\novel.exe read)
+
+### 指定阅读本地书目
+
+./novel read --novelname 斗罗 (windows: .\novel.exe read --novelname 斗罗)
+
+---
+---
+---
+---
+> 阅读时: [上一页 a+Enter] [下一页 d+Enter] [返回选取章节 q+Enter] [结束程序 Ctrl+c]

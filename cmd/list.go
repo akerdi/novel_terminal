@@ -36,16 +36,14 @@ type SearchResultDB struct {
 }
 
 func ListCommand(cmd *cobra.Command, args []string) {
-	fmt.Println("novelname :::", NovelName)
 	var query string
 	if NovelName == "" {
+		fmt.Println("请输入小说名+Enter键: ")
 		reader := bufio.NewReader(os.Stdin)
-		kw, err := reader.ReadString('\n')
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		kw, _ := reader.ReadString('\n')
 		NovelName = kw
 	}
+	fmt.Println("您要找的小说是: ", NovelName)
 	var segmenter sego.Segmenter
 	segmenter.LoadDictionary("dictionary.txt")
 	text := []byte(NovelName)

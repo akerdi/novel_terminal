@@ -72,7 +72,8 @@ func SetUpdateDataBase() {
 	// defer db.Close()
 	checkErr(err)
 	// enable foreign_keys
-	tx, _ := db.Begin()
+	tx, err := db.Begin()
+	checkErr(err)
 	tx.Exec("PRAGMA foreign_keys = ON")
 
 	stmt, err := db.Prepare(create_NOVEL_SITE)
