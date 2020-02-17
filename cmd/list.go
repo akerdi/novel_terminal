@@ -91,9 +91,9 @@ func ToReadBySearchResults(searchResults []*SearchResultDB) {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, searchResult.SearchResult.Title, searchResult.SearchResult.Host))
 		nextIndex++
 	}
-	selectIndex := askSearchSiteTitleSelect(askQs)
-
-	searchResult := searchResults[selectIndex]
+	selectIndex := askSearchSiteTitleSelect(askQs)	searchResult := searchResults[selectIndex]
+	askQs = askQs[:0]
+	nextIndex = 0
 	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
 	chapterDBResult, err := getChapterDBBySearchResult(searchResult)
 	if err != nil {
@@ -243,11 +243,13 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 	}{}
 	err := survey.Ask(qs, &answers)
 	if err != nil {
-		fmt.Println(err.Error())
-		return -1
+		log.Fatal("survey meet error: ", err)
 	}
 	indexStr := strings.Split(answers.ChooseSite, " ||| ")[0]
-	index, _ := strconv.ParseInt(indexStr, 10, 64)
+	index, err := strconv.ParseInt(indexStr, 10, 64)
+	if err != nil {
+		fmt.Println("strconv parseInt meet error: ", err)
+	}
 	fmt.Printf("您选择了 %d\n", index)
 	return index
 }
