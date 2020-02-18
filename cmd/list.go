@@ -83,7 +83,7 @@ func ListCommand(cmd *cobra.Command, args []string) {
 	ToReadBySearchResults(searchResults)
 }
 
-// 根据searchResults 去选取网站对应小说目录
+// ToReadBySearchResults 根据searchResults 去选取网站对应小说目录
 func ToReadBySearchResults(searchResults []*SearchResultDB) {
 	var askQs []string
 	nextIndex := 0
