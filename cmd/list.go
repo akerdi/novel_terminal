@@ -91,7 +91,8 @@ func ToReadBySearchResults(searchResults []*SearchResultDB) {
 		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, searchResult.SearchResult.Title, searchResult.SearchResult.Host))
 		nextIndex++
 	}
-	selectIndex := askSearchSiteTitleSelect(askQs)	searchResult := searchResults[selectIndex]
+	selectIndex := askSearchSiteTitleSelect(askQs)
+	searchResult := searchResults[selectIndex]
 	askQs = askQs[:0]
 	nextIndex = 0
 	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
