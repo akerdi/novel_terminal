@@ -251,7 +251,7 @@ func askSearchSiteTitleSelect(searchTitleResultArray []string) int64 {
 	if err != nil {
 		fmt.Println("strconv parseInt meet error: ", err)
 	}
-	fmt.Printf("您选择了 %d\n", index)
+	fmt.Printf("您选择了 %s", answers.ChooseSite)
 	return index
 }
 

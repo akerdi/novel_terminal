@@ -107,15 +107,14 @@ func selectChapterToRead(chapterResult *ChapterResultDB) {
 
 // Read 开始读取该章节
 func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
+	chapterElement := chapterResult.Chapter.Chapters[chapterElementSelectIndex]
+	fmt.Printf("\n-----------------------------------------\n   ****%s****   \n-----------------------------------------\n", chapterElement.ChapterName)
 	contentDBResult, err := getContentDBResult(chapterResult, chapterElementSelectIndex)
 	htmlText, err := html2text.FromString(contentDBResult.Content.Content, html2text.Options{OmitLinks: true})
 	if err != nil {
 		log.Fatal("文章转义出错 ", err)
 	}
 	fmt.Println(htmlText)
-	// 保存当前
-	// 读取前后章节，保存
-	readyForNextAndPreviewNovelContent(chapterElementSelectIndex, chapterResult.Chapter.Chapters)
 outerloop:
 	for {
 		reader := bufio.NewReader(os.Stdin)
@@ -180,11 +179,6 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 		log.Fatal("save content err: ", err)
 	}
 	return getContentDBResult(chapterResult, chapterElementSelectIndex)
-}
-
-// 缓存上下页数据
-func readyForNextAndPreviewNovelContent(targetIndex int64, chapterResults []*model.NovelChapterElement) {
-
 }
 
 // 根据sql.Rows 转换得到数据库对象
