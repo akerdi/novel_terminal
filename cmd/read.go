@@ -56,6 +56,7 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	segmenter.LoadDictionary("dictionary.txt")
 	text := []byte(NovelName)
 	segments := segmenter.Segment(text)
+	// 生成like 搜索语句
 	likeArray := []string{NovelName}
 	likeString := fmt.Sprintf("n.title like '%%%s%%'", NovelName)
 	for _, seg := range segments {
@@ -69,9 +70,6 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// if !rows.Next() {
-	// 	log.Fatal("没有找到对应的小说")
-	// }
 	chapterResults := make([]*ChapterResultDB, 0)
 	var askQs []string
 	nextIndex := 0

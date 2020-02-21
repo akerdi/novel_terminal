@@ -122,7 +122,10 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	if !ok {
 		return &novelChapter, err
 	}
-	chapterSelector = chapterSelector + " a"
+	chapterLinkPrefix, ok := conf.RuleConfig.Rule[host]["link_prefix"].(string)
+	if !ok {
+		return &novelChapter, err
+	}
 	var chapterElements []*model.NovelChapterElement
 	c.OnHTML(chapterSelector, func(element *colly.HTMLElement) {
 		html := element.Attr("href")
@@ -135,12 +138,18 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 		chapterElement.ChapterHref = html
 		chapterElements = append(chapterElements, &chapterElement)
 	})
-	fmt.Println("parseNovelChapter href: ", searchResult.SearchResult.Href)
-	err = c.Visit(searchResult.SearchResult.Href)
+	var searchHref string = searchResult.SearchResult.Href
+	if chapterTail, ok := conf.RuleConfig.Rule[host]["chapter_tail"].(string); ok {
+		if containTail := strings.Contains(searchHref, chapterTail); !containTail {
+			searchHref = fmt.Sprintf("%s%s", searchHref, chapterTail)
+		}
+	}
+	fmt.Println("parseNovelChapter href: ", searchHref)
+	err = c.Visit(searchHref)
 	novelChapter.Chapters = chapterElements
 	novelChapter.Name = searchResult.SearchResult.Title
 	novelChapter.OriginUrl = searchResult.SearchResult.Href
-	novelChapter.LinkPrefix = conf.RuleConfig.Rule[host]["link_prefix"].(string)
+	novelChapter.LinkPrefix = chapterLinkPrefix
 	novelChapter.Domain = fmt.Sprintf("%s://%s", requestURI.Scheme, requestURI.Host)
 	return &novelChapter, err
 }
@@ -222,7 +231,6 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 	if err != nil {
 		return saveID, err
 	}
-	fmt.Println("[list.saveNoivelChapter] chapterResult:: ", chapterResult)
 	saveID, err = chapterResult.LastInsertId()
 	return saveID, err
 }

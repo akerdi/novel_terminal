@@ -33,7 +33,7 @@ func (engine *BaiDuSearchEngine) EngineRun(novelName string, group *sync.WaitGro
 	searchKey := url.QueryEscape(fmt.Sprintf(engine.searchRule, novelName))
 	requestUrl := fmt.Sprintf(engine.domain, searchKey)
 	c := fetcher.NewCollector()
-	fmt.Println("requestUrlrequestUrl: ", requestUrl)
+	fmt.Println("Search engine start request url: ", requestUrl)
 	c.OnHTML(engine.parseRule, func(element *colly.HTMLElement) {
 		group.Add(1)
 		go engine.extractData(element, group)
@@ -64,7 +64,7 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 			return
 		}
 		isParse := engine.CheckIsParse(host)
-		fmt.Println("host:: ", host, " 是否生成模板?: ", isParse)
+		fmt.Println("host:: ", host, " 是否已有该模板?: ", isParse)
 		if !isParse {
 			return
 		}

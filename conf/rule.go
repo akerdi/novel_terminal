@@ -13,6 +13,14 @@ type Config struct {
 	IgnoreDomain map[string]int                    `json:"ignores"`
 }
 
+/*
+Config.Rule
+	link_prefix: ||| -1 代表取chapter_url ||| 1 代表直接取URL ||| 0 代表使用域名加拼接
+	chapter_selector: 用于寻找chapter 目录章节的元素
+	content_selector: 用于寻找content 的元素
+	chapter_tail: 如果存在，则作为chapter 附加添加到link 的后缀
+*/
+
 var RuleConfig *Config
 
 func init() {
