@@ -82,3 +82,6 @@ In the captor, use ↑ ↓ to choose preview or next captor
 ---
 ---
 > 阅读时: [上一页 a+Enter] [下一页 d+Enter] [返回选取章节 q+Enter] [结束程序 Ctrl+c]
+
+
+[参考 YourNovel](https://github.com/DemonFengYuXiang/YourNovel)
