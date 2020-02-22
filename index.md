@@ -1,37 +1,84 @@
-## Welcome to GitHub Pages
+终端小说
 
-You can use the [editor on GitHub](https://github.com/shaohung001/novel_terminal/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+使用cobra colly redis xorm 等构建
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+# Enter Novel
 
-### Markdown
+    novel [find/list/read]
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Process is entered and listening for commands
 
-```markdown
-Syntax highlighted code block
+## Usage
 
-# Header 1
-## Header 2
-### Header 3
+### Common Usage
 
-- Bulleted
-- List
+#### find ${novelname} [x] 已实现
 
-1. Numbered
-2. List
+If local storage exist the novelname, screen prints the novelname:
 
-**Bold** and _Italic_ and `Code` text
+《斗罗大陆》
 
-[Link](url) and ![Image](src)
-```
+Or this will list sites which novel do support. Highlight the first site if sites.
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+User use ↑ or ↓ to select target site, [novel] then will do the rest job for you.
 
-### Jekyll Themes
+#### delete ${novelname} [ ] 未实现
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/shaohung001/novel_terminal/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+if local storage exist ${novelname}, delete it.
 
-### Support or Contact
+Storage will persist only one copy of a ${novelname}, so if you what to reselect site, user should delete ${novelname} first
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+#### list ${novelname} [x] 已实现
+
+${novelname} optional.
+
+Listing all you were in your local storage. such as:
+
+《斗罗大陆》《神墓》《神雕侠侣》《倚天屠龙记》
+
+User use ← or → to enter the novel, then screen listing all captors:
+
+《第一章》《第二章》《第三章》
+
+Select ← → ↑ ↓ to enter the captor.
+
+In the captor, use ↑ ↓ to choose preview or next captor
+
+
+
+
+# Usage 1.0
+
+# 查看帮助
+
+./novel (windows: .\novel.exe)
+
+# 搜索书目
+
+./novel find (windows: .\novel.exe find)
+
+### 指定搜索书目
+
+./novel find --novelname 斗罗大陆 (windows: .\novel.exe find --novelname 斗罗大陆)
+
+# 列出本地书目
+
+./novel list (windows: .\novel.exe list)
+
+### 指定列出本地书目
+
+./novel list --novelname 斗罗 (windows: .\novel.exe list --novelname 斗罗)
+
+# 直接阅读本地书目
+
+./novel read (windows: .\novel.exe read)
+
+### 指定阅读本地书目
+
+./novel read --novelname 斗罗 (windows: .\novel.exe read --novelname 斗罗)
+
+---
+---
+---
+---
+> 阅读时: [上一页 a+Enter] [下一页 d+Enter] [返回选取章节 q+Enter] [结束程序 Ctrl+c]
