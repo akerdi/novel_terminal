@@ -5,6 +5,7 @@ import (
 	"github.com/gocolly/colly/extensions"
 )
 
+// NewCollector 生成colly 对象
 func NewCollector() *colly.Collector {
 	uaStr := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
 	c := colly.NewCollector(

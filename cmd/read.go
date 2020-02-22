@@ -29,21 +29,25 @@ var readCmd = &cobra.Command{
 	Run:   ReadCommand,
 }
 
+// ChapterResultDB 章节数据结果对象
 type ChapterResultDB struct {
-	Chapter      model.NovelChapter
-	ID           int64 `json:"id"`
-	CreateAt     int64 `json:"createAt"`
-	NovelSite_ID int64
-}
-type ContentResultDB struct {
-	Content       model.NovelContent
-	ID            int64 `json:"id"`
-	CreateAt      int64 `json:"createAt"`
-	Chapter_ID    int64 `json:"chapter_id"`
-	Site_ID       int64
-	Chapter_INDEX int64
+	Chapter     model.NovelChapter
+	ID          int64 `json:"id"`
+	CreateAt    int64 `json:"createAt"`
+	NovelSiteID int64
 }
 
+// ContentResultDB 内容数据结果对象
+type ContentResultDB struct {
+	Content      model.NovelContent
+	ID           int64 `json:"id"`
+	CreateAt     int64 `json:"createAt"`
+	ChapterID    int64 `json:"chapter_id"`
+	SiteID       int64
+	ChapterINDEX int64
+}
+
+// ReadCommand hmmm
 func ReadCommand(cmd *cobra.Command, args []string) {
 	if NovelName == "" {
 		fmt.Println("请输入小说名+Enter键: ")
@@ -150,7 +154,7 @@ outerloop:
 // 根据用户选取文章对应章节，得到该章节数据
 func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) (*ContentResultDB, error) {
 	var contentResultDB ContentResultDB
-	var queryStr = fmt.Sprintf("SELECT * FROM novelcontent WHERE (chapter_index=%d AND novelsite_id=%d AND novelchapter_id=%d) LIMIT 1;", chapterElementSelectIndex, chapterResult.NovelSite_ID, chapterResult.ID)
+	var queryStr = fmt.Sprintf("SELECT * FROM novelcontent WHERE (chapter_index=%d AND novelsite_id=%d AND novelchapter_id=%d) LIMIT 1;", chapterElementSelectIndex, chapterResult.NovelSiteID, chapterResult.ID)
 	rows, err := db.Query(queryStr)
 	defer rows.Close()
 	if err != nil {
@@ -172,7 +176,7 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 		log.Fatal("insert content err: ", err)
 	}
 	nowTime := time.Now().UnixNano() / 1e6
-	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, contentResult.Content, chapterElementSelectIndex, nowTime, chapterResult.NovelSite_ID, chapterResult.ID})
+	_, err = db.ExecWithStmt(stmt, []interface{}{chapterResult.Chapter.Name, contentResult.Content, chapterElementSelectIndex, nowTime, chapterResult.NovelSiteID, chapterResult.ID})
 	if err != nil {
 		log.Fatal("save content err: ", err)
 	}
@@ -181,9 +185,9 @@ func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectInde
 
 // 根据sql.Rows 转换得到数据库对象
 func parseContentResultDBByRows(rows *sql.Rows) *ContentResultDB {
-	var id, novelsite_id, chapter_index, novelchapter_id, createAt int64
+	var id, novelsiteID, chapterIndex, novelchapterID, createAt int64
 	var title, content string
-	_ = rows.Scan(&id, &title, &content, &chapter_index, &createAt, &novelsite_id, &novelchapter_id)
+	_ = rows.Scan(&id, &title, &content, &chapterIndex, &createAt, &novelsiteID, &novelchapterID)
 	return &ContentResultDB{
 		Content: model.NovelContent{
 			NovelName:   "",
@@ -193,10 +197,10 @@ func parseContentResultDBByRows(rows *sql.Rows) *ContentResultDB {
 			PreChapter:  "",
 			NextChapter: "",
 		},
-		ID:            id,
-		Site_ID:       novelsite_id,
-		Chapter_ID:    novelchapter_id,
-		Chapter_INDEX: chapter_index,
+		ID:           id,
+		SiteID:       novelsiteID,
+		ChapterID:    novelchapterID,
+		ChapterINDEX: chapterIndex,
 	}
 }
 

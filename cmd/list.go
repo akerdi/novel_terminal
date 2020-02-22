@@ -30,11 +30,13 @@ var listCmd = &cobra.Command{
 	Run:   ListCommand,
 }
 
+// SearchResultDB 搜索数据结果对象
 type SearchResultDB struct {
 	SearchResult model.SearchResult
 	ID           int64 `json:"id"`
 }
 
+// ListCommand hmmm
 func ListCommand(cmd *cobra.Command, args []string) {
 	var query string
 	if NovelName == "" {
@@ -95,7 +97,6 @@ func ToReadBySearchResults(searchResults []*SearchResultDB) {
 	searchResult := searchResults[selectIndex]
 	askQs = askQs[:0]
 	nextIndex = 0
-	// chapter, err := parseNovelChapter(searchResult.Href, searchResult.Title)
 	chapterDBResult, err := getChapterDBBySearchResult(searchResult)
 	if err != nil {
 		log.Fatal("获取本地书本失败: ", err)
@@ -182,19 +183,19 @@ func getChapterDBBySearchResult(searchResult *SearchResultDB) (*ChapterResultDB,
 		return &chapterDBResult, nil
 	}
 	chapterDBResult = ChapterResultDB{
-		ID:           id,
-		CreateAt:     0,
-		NovelSite_ID: searchResult.ID,
-		Chapter:      *chapterResult,
+		ID:          id,
+		CreateAt:    0,
+		NovelSiteID: searchResult.ID,
+		Chapter:     *chapterResult,
 	}
 	return &chapterDBResult, nil
 }
 
 // 根据sql.Rows 得到ChapterResultDB
 func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
-	var id, novelsite_id, createAt int64
-	var title, chapters, origin_url, link_prefix, domain string
-	_ = rows.Scan(&id, &title, &chapters, &origin_url, &link_prefix, &domain, &createAt, &novelsite_id)
+	var id, novelsiteID, createAt int64
+	var title, chapters, originURL, linkPrefix, domain string
+	_ = rows.Scan(&id, &title, &chapters, &originURL, &linkPrefix, &domain, &createAt, &novelsiteID)
 	var chapterElements []*model.NovelChapterElement
 	byteData := []byte(chapters)
 	if err := json.Unmarshal(byteData, &chapterElements); err != nil {
@@ -203,14 +204,14 @@ func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
 	return &ChapterResultDB{
 		Chapter: model.NovelChapter{
 			Name:       title,
-			OriginUrl:  origin_url,
+			OriginUrl:  originURL,
 			Chapters:   chapterElements,
-			LinkPrefix: link_prefix,
+			LinkPrefix: linkPrefix,
 			Domain:     domain,
 		},
-		ID:           id,
-		NovelSite_ID: novelsite_id,
-		CreateAt:     createAt,
+		ID:          id,
+		NovelSiteID: novelsiteID,
+		CreateAt:    createAt,
 	}
 }
 

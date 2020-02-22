@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// Config 基本配置
 type Config struct {
 	Engines      []string
 	Rule         map[string]map[string]interface{} `json:"rules"`
@@ -21,6 +22,7 @@ Config.Rule
 	chapter_tail: 如果存在，则作为chapter 附加添加到link 的后缀
 */
 
+// RuleConfig 规则基本配置
 var RuleConfig *Config
 
 func init() {

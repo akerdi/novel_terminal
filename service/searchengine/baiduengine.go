@@ -12,6 +12,7 @@ import (
 	"github.com/gocolly/colly"
 )
 
+// BaiDuSearchEngine 使用百度搜索引擎对象
 type BaiDuSearchEngine struct {
 	parseRule       string
 	searchRule      string
@@ -19,6 +20,7 @@ type BaiDuSearchEngine struct {
 	parseResultFunc func(searchResult *model.SearchResult)
 }
 
+// NewBaiduSearchEngine 生成百度搜索引擎对象
 func NewBaiduSearchEngine(parseResultFunc func(result *model.SearchResult)) *BaiDuSearchEngine {
 	return &BaiDuSearchEngine{
 		parseRule:       "#content_left h3.t a",
@@ -28,6 +30,7 @@ func NewBaiduSearchEngine(parseResultFunc func(result *model.SearchResult)) *Bai
 	}
 }
 
+// EngineRun 使用引擎
 func (engine *BaiDuSearchEngine) EngineRun(novelName string, group *sync.WaitGroup) {
 	defer group.Done()
 	searchKey := url.QueryEscape(fmt.Sprintf(engine.searchRule, novelName))
@@ -77,6 +80,7 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 	}
 }
 
+// CheckIsParse 将页面中的链接对比Rule 是否有该模板
 func (engine *BaiDuSearchEngine) CheckIsParse(host string) bool {
 	isParse := false
 	for key := range conf.RuleConfig.Rule {

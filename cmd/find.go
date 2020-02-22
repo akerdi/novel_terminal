@@ -83,6 +83,7 @@ func readRuneFunc() rune {
 var searchResults []*model.SearchResult
 var searchResultIndex = 0
 
+// EngineSearch
 type EngineSearch interface {
 	EngineRun(string, *sync.WaitGroup)
 }
