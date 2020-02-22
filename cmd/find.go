@@ -21,6 +21,7 @@ var findCmd = &cobra.Command{
 	Run:   FindCommand,
 }
 
+// FindCommand hmmm
 func FindCommand(cmd *cobra.Command, args []string) {
 	if NovelName != "" {
 		startSearchEngine(NovelName)

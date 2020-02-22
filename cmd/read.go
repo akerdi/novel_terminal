@@ -79,7 +79,7 @@ func ReadCommand(cmd *cobra.Command, args []string) {
 	nextIndex := 0
 	for rows.Next() {
 		chapterResultDB := parseChapterResultDBByRows(rows)
-		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterResultDB.Chapter.Name, chapterResultDB.Chapter.OriginUrl))
+		askQs = append(askQs, fmt.Sprintf("%d ||| %s %s", nextIndex, chapterResultDB.Chapter.Name, chapterResultDB.Chapter.OriginURL))
 		nextIndex++
 		chapterResults = append(chapterResults, chapterResultDB)
 	}
@@ -212,7 +212,7 @@ func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChap
 		html = chapterElement.ChapterHref
 	} else if chapter.Chapter.LinkPrefix == "-1" {
 		// html = "www.baidu.com"
-		html = common.UrlJoin(chapterElement.ChapterHref, chapter.Chapter.OriginUrl)
+		html = common.UrlJoin(chapterElement.ChapterHref, chapter.Chapter.OriginURL)
 	} else if chapter.Chapter.LinkPrefix == "0" {
 		html = common.UrlJoin(chapterElement.ChapterHref, chapter.Chapter.Domain)
 	}

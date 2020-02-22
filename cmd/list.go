@@ -149,7 +149,7 @@ func parseNovelChapter(searchResult *SearchResultDB) (*model.NovelChapter, error
 	err = c.Visit(searchHref)
 	novelChapter.Chapters = chapterElements
 	novelChapter.Name = searchResult.SearchResult.Title
-	novelChapter.OriginUrl = searchResult.SearchResult.Href
+	novelChapter.OriginURL = searchResult.SearchResult.Href
 	novelChapter.LinkPrefix = chapterLinkPrefix
 	novelChapter.Domain = fmt.Sprintf("%s://%s", requestURI.Scheme, requestURI.Host)
 	return &novelChapter, err
@@ -204,7 +204,7 @@ func parseChapterResultDBByRows(rows *sql.Rows) *ChapterResultDB {
 	return &ChapterResultDB{
 		Chapter: model.NovelChapter{
 			Name:       title,
-			OriginUrl:  originURL,
+			OriginURL:  originURL,
 			Chapters:   chapterElements,
 			LinkPrefix: linkPrefix,
 			Domain:     domain,
@@ -228,7 +228,7 @@ func saveNovelChapter(novelChapter *model.NovelChapter, searchResult *SearchResu
 		log.Printf("JSON MARSHALING failed: %s \n", err)
 		return saveID, err
 	}
-	chapterResult, err := db.ExecWithStmt(stmt, []interface{}{novelChapter.Name, chapterstr, novelChapter.OriginUrl, novelChapter.LinkPrefix, novelChapter.Domain, searchResult.ID, nowTime})
+	chapterResult, err := db.ExecWithStmt(stmt, []interface{}{novelChapter.Name, chapterstr, novelChapter.OriginURL, novelChapter.LinkPrefix, novelChapter.Domain, searchResult.ID, nowTime})
 	if err != nil {
 		return saveID, err
 	}
