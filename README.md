@@ -4,7 +4,7 @@
 
 # Enter Novel
 
-    novel
+    novel [find/list/read]
 
 Process is entered and listening for commands
 
@@ -12,15 +12,7 @@ Process is entered and listening for commands
 
 ### Common Usage
 
-    exit
-
-process stop
-
-    type (ESC)
-
-Process command level will pop out one level
-
-#### find ${novelname}
+#### find ${novelname} [x] 已实现
 
 If local storage exist the novelname, screen prints the novelname:
 
@@ -30,13 +22,13 @@ Or this will list sites which novel do support. Highlight the first site if site
 
 User use ↑ or ↓ to select target site, [novel] then will do the rest job for you.
 
-#### delete ${novelname}
+#### delete ${novelname} [ ] 未实现
 
 if local storage exist ${novelname}, delete it.
 
 Storage will persist only one copy of a ${novelname}, so if you what to reselect site, user should delete ${novelname} first
 
-#### list ${novelname}
+#### list ${novelname} [x] 已实现
 
 ${novelname} optional.
 
