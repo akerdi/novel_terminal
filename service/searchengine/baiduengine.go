@@ -55,6 +55,7 @@ func (engine *BaiDuSearchEngine) extractData(element *colly.HTMLElement, group *
 	c := fetcher.NewCollector()
 	c.OnResponse(func(response *colly.Response) {
 		realURL := response.Request.URL.String()
+		fmt.Println("realURL: ", realURL)
 		isContain := strings.Contains(realURL, "baidu")
 		if isContain {
 			return
