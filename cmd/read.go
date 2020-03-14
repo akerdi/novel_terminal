@@ -110,7 +110,8 @@ func selectChapterToRead(chapterResult *ChapterResultDB) {
 // Read 开始读取该章节
 func Read(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) {
 	chapterElement := chapterResult.Chapter.Chapters[chapterElementSelectIndex]
-	fmt.Printf("\n-----------------------------------------\n   ****%s****   \n-----------------------------------------\n", chapterElement.ChapterName)
+	chapterSeparatorStr := fmt.Sprintf("\n-----------------------------------------\n   ****%s****   \n-----------------------------------------\n", chapterElement.ChapterName)
+	fmt.Println(common.PrintColorOutputs([]rune(chapterSeparatorStr)))
 	contentDBResult, err := getContentDBResult(chapterResult, chapterElementSelectIndex)
 	htmlText, err := html2text.FromString(contentDBResult.Content.Content, html2text.Options{OmitLinks: true})
 	if err != nil {
@@ -150,6 +151,8 @@ outerloop:
 		}
 	}
 }
+
+
 
 // 根据用户选取文章对应章节，得到该章节数据
 func getContentDBResult(chapterResult *ChapterResultDB, chapterElementSelectIndex int64) (*ContentResultDB, error) {
@@ -236,6 +239,8 @@ func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChap
 	err := c.Visit(html)
 	return &novelContent, err
 }
+
+//////////////
 
 func init() {
 	RootCmd.AddCommand(readCmd)
