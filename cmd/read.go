@@ -17,9 +17,7 @@ import (
 
 	"github.com/gocolly/colly"
 	"jaytaylor.com/html2text"
-
 	"github.com/huichen/sego"
-
 	"github.com/spf13/cobra"
 )
 
@@ -219,6 +217,7 @@ func parseNovelContent(chapter *ChapterResultDB, chapterElement *model.NovelChap
 	} else if chapter.Chapter.LinkPrefix == "0" {
 		html = common.UrlJoin(chapterElement.ChapterHref, chapter.Chapter.Domain)
 	}
+	log.Println("get novel content by html: ", html)
 	c := fetcher.NewCollector()
 	requestURI, _ := url.ParseRequestURI(chapter.Chapter.Domain)
 	host := requestURI.Host

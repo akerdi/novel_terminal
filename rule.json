@@ -30,6 +30,26 @@
       "link_prefix": "1",
       "chapter_selector": "#list a",
       "content_selector": "#booktext"
+    },
+    "baishuku.com": {
+      "link_prefix": "-1",
+      "chapter_selector": "table tr .ccss a",
+      "content_selector": "#content"
+    },
+    "www.lread.net": {
+      "link_prefix": "0",
+      "chapter_selector": "#list a",
+      "content_selector": "#booktext"
+    },
+    "www.mengzeda.cn": {
+      "link_prefix": "0",
+      "chapter_selector": "#list a",
+      "content_selector": "#content"
+    },
+    "www.kanshuhai.com": {
+      "link_prefix": "-1",
+      "chapter_selector": "#book a",
+      "content_selector": "con_left"
     }
   },
   "ignores": {
